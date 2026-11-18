@@ -5,6 +5,7 @@ import { exposeInterest, familiarity, interestStrength, noteExposure, novelty, p
 import {
   BAKERY_MAX_STOCK,
   BREAD_PRICE,
+  TEA_PRICE,
   PLACES,
   PLACE_IDS,
   SPECIES,
@@ -215,6 +216,26 @@ export function giftBlocked(w: World, c: Creature, o: Creature, item: ItemId): s
   return null;
 }
 
+export const MAX_SELL_RUN = 2; // the stall takes this many of one kind from a creature in a row
+export const SELL_RUN_RESET = 120; // world minutes: after this long the run is forgotten
+const SELL_FLOOR = 0.55; // the lowest price multiplier; a kind never sells for less than about half
+const SELL_DROP = 0.08; // price multiplier lost per sale
+export const MARKET_RECOVERY = 0.03; // price multiplier regained per step (5 world minutes)
+const TEA_FAMILIARITY_MAX = 2.5; // a creature does not want a fourth cup in an afternoon
+
+/** The stall does not take more than MAX_SELL_RUN of one kind from a creature without it doing something else in between. A starving creature is exempt. */
+export function sellBlocked(w: World, c: Creature, item: ItemId): string | null {
+  const r = c.sellRun;
+  if (!r || r.item !== item || w.t - r.t > SELL_RUN_RESET || r.n < MAX_SELL_RUN) return null;
+  if (needLevel(c, "hunger") > 0.8) return null;
+  return `already sold ${MAX_SELL_RUN} ${itemDef(w, item).name} in a row; do something else first`;
+}
+
+/** A cup of tea is cheap, so a creature tires of it quickly. */
+export function teaBlocked(w: World, c: Creature): string | null {
+  return familiarity(c, "item:tea", w.t) >= TEA_FAMILIARITY_MAX ? "had plenty of tea lately" : null;
+}
+
 /** Price one repeatable thing: returns its novelty (before counting it), updates boredom, records the exposure. */
 function practise(w: World, c: Creature, key: string): number {
   const nov = novelty(c, key, w.t);
@@ -248,6 +269,17 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
     }
     case "buy_food":
       if (p.place !== "bakery") return "not at the bakery";
+      if (m.item === "tea") {
+        if (p.coins < TEA_PRICE) return "not enough coins";
+        if (p.inv.length >= MAX_CARRY) return "carrying too much";
+        const t = teaBlocked(w, c);
+        if (t) return t;
+        p.coins -= TEA_PRICE;
+        p.inv.push("tea");
+        return null;
+      }
+      m.item = "bread";
+      if (p.inv.length >= MAX_CARRY) return "carrying too much";
       if (p.coins < BREAD_PRICE) return "not enough coins";
       if (p.stock <= 0) return "bakery is out of bread";
       p.coins -= BREAD_PRICE;
@@ -265,6 +297,8 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       const item = takeItem(p.inv, m.item, (i) => itemDef(w, i).sell > 0);
       if (!item) return "nothing to sell";
       m.item = item;
+      const blocked = sellBlocked(w, c, item);
+      if (blocked) return blocked;
       p.coins += itemDef(w, item).sell;
       return null;
     }
@@ -312,15 +346,37 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
   }
 }
 
+/** Where a move has to happen. A move proposed elsewhere is turned into a walk there. */
+const AUTO_WALK: Partial<Record<MoveKind, PlaceId>> = { sell: "fountain", buy_food: "bakery", craft: "workshop" };
+
 export function validateMoves(w: World, c: Creature, raw: unknown[]): { moves: Move[]; rejected: string[] } {
   const moves: Move[] = [];
   const rejected: string[] = [];
   const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site, builds: buildsToday(w, c) };
   for (const r of raw.slice(0, 3)) {
+    if (moves.length >= 3) break;
     const m = normalizeMove(w, r);
     if (!m) {
       rejected.push("unrecognised move");
       break;
+    }
+    // Wrong place for a sell, buy_food or craft: the server swaps in a walk to the right place (and keeps the move, if
+    // the move would then be valid). No model call is involved; the move is still validated in full.
+    const dest = AUTO_WALK[m.do];
+    if (dest && proj.place !== dest && moves.length < 3) {
+      const trial: Projection = { ...proj, inv: [...proj.inv] };
+      const walk: Move = { do: "walk", place: dest, why: `I need to be at ${PLACES[dest].name} first.` };
+      if (checkMove(w, c, walk, trial) === null) {
+        const after = checkMove(w, c, m, trial);
+        if (after === null) {
+          moves.push(walk);
+          Object.assign(proj, trial);
+          if (moves.length < 3) {
+            moves.push(m);
+          }
+          continue;
+        }
+      }
     }
     const err = checkMove(w, c, m, proj);
     if (err) {
@@ -399,6 +455,18 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     }
     case "buy_food": {
       if (c.place !== "bakery") return "not at the bakery";
+      if (m.item === "tea") {
+        if (c.coins < TEA_PRICE) return "not enough coins";
+        if (c.inventory.length >= MAX_CARRY) return "carrying too much";
+        const t = teaBlocked(w, c);
+        if (t) return t;
+        c.coins -= TEA_PRICE;
+        c.inventory.push("tea");
+        begin(5);
+        say(`${name} buys a cup of tea (${TEA_PRICE} coin).`);
+        return null;
+      }
+      if (c.inventory.length >= MAX_CARRY) return "carrying too much";
       if (c.coins < BREAD_PRICE) return "not enough coins";
       if (w.bakeryStock <= 0) return "the bakery is out of bread";
       c.coins -= BREAD_PRICE;
@@ -418,7 +486,10 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     case "sell": {
       if (c.place !== "fountain") return "not at the market stall";
       const item = m.item;
-      if (!item || itemDef(w, item).sell <= 0 || !removeOne(c.inventory, item)) return "nothing to sell";
+      if (!item || itemDef(w, item).sell <= 0 || !c.inventory.includes(item)) return "nothing to sell";
+      const blocked = sellBlocked(w, c, item);
+      if (blocked) return blocked;
+      removeOne(c.inventory, item);
       begin(10);
       say(`${name} offers ${itemDef(w, item).name} at the stall.`);
       return null;
@@ -572,6 +643,7 @@ function finishActivity(w: World, c: Creature) {
   const m = a.move;
   const name = c.sheet.name;
   c.activity = null;
+  if (a.kind !== "sell" && a.kind !== "walk") c.sellRun = null; // doing something else clears the run at the stall
   switch (a.kind) {
     case "walk": {
       if (!m.place) break;
@@ -594,7 +666,8 @@ function finishActivity(w: World, c: Creature) {
       const pm = payoffScale(novelty(c, `item:${item}`, w.t));
       noteExposure(c, `item:${item}`, w.t);
       impulse(c, 0.03 + (eaten * 0.15 + fit * 0.25) * pm);
-      if (itemDef(w, item).custom) applyUse(c, itemDef(w, item), `the ${itemDef(w, item).name}`, pm);
+      if (itemDef(w, item).custom || itemDef(w, item).mood > 0) applyUse(c, itemDef(w, item), `the ${itemDef(w, item).name}`, pm);
+      if (itemDef(w, item).tags.includes("comfort")) relieve(c, "comfort", 0.15 * pm);
       if (before > 0.4) addInfluence(c, "joy", `a welcome ${itemDef(w, item).name}`, 0.3 * pm + Math.max(0, fit) * 0.2);
       remember(w, c, `I ate ${itemDef(w, item).name}${before > 0.7 ? " and it was badly needed" : ""}.`, 0.2 + Math.abs(fit) + (before > 0.7 ? 0.2 : 0));
       break;
@@ -628,7 +701,7 @@ function finishActivity(w: World, c: Creature) {
       const stock = c.inventory.filter((i) => i === item).length;
       const nov = practise(w, c, `craft:${item}`);
       const pm = payoffScale(nov) * (stock >= 2 ? 0.6 : 1); // a pile of the same thing is dull
-      c.inventory.push(item);
+      if (c.inventory.length < MAX_CARRY) c.inventory.push(item); // hands filled up while crafting (a gift, a purchase): the piece is set aside, not carried
       c.energy = clamp(c.energy - 0.08, ENERGY_FLOOR, 1);
       relieve(c, "comfort", 0.03);
       const fit = appraise(c, itemDef(w, item).tags);
@@ -648,7 +721,9 @@ function finishActivity(w: World, c: Creature) {
       const price = Math.max(1, Math.round(itemDef(w, item).sell * (w.market[item] ?? 1)));
       const pm = payoffScale(practise(w, c, `sell:${item}`));
       c.coins += price;
-      w.market[item] = Math.max(0.3, (w.market[item] ?? 1) - 0.12);
+      w.market[item] = Math.max(SELL_FLOOR, (w.market[item] ?? 1) - SELL_DROP);
+      const run = c.sellRun;
+      c.sellRun = { item, n: run && run.item === item && w.t - run.t <= SELL_RUN_RESET ? run.n + 1 : 1, t: w.t };
       impulse(c, (0.015 + price * 0.005) * pm);
       addInfluence(c, "accomplishment", `sold a ${itemDef(w, item).name}`, 0.15 * pm);
       logFeed(w, c.id, "move", `${name} sells ${itemDef(w, item).name} for ${price} coins.`);
@@ -801,7 +876,7 @@ export function stepWorld(w: World): string[] {
   if (w.t % 60 < STEP) sweepBuilds(w, (x, who, kind, text) => logFeed(x, who, kind, text));
   if (w.t % 60 < STEP) sweepRequests(w);
   if (w.t % 60 < STEP && w.bakeryStock < BAKERY_MAX_STOCK) w.bakeryStock += 1;
-  for (const k of Object.keys(w.market)) w.market[k] = Math.min(1, w.market[k] + 0.015);
+  for (const k of Object.keys(w.market)) w.market[k] = Math.min(1, w.market[k] + MARKET_RECOVERY);
   const need: string[] = [];
   for (const c of Object.values(w.creatures)) {
     stepCreature(w, c, STEP);

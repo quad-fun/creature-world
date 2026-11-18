@@ -60,7 +60,9 @@ export interface ItemDef {
   custom: boolean;
 }
 
-const CATALOG_KIND: Record<string, ItemKind> = { bread: "food", "mended-thing": "tool", trinket: "curio", potion: "curio" };
+const CATALOG_KIND: Record<string, ItemKind> = { bread: "food", tea: "food", "mended-thing": "tool", trinket: "curio", potion: "curio" };
+/** Small, bounded comfort from a catalog item when it is used or eaten (same scale as appraised gifts). */
+const CATALOG_EFFECT: Record<string, { mood: number; energy: number }> = { tea: { mood: 0.05, energy: 0.03 } };
 const FALLBACK: ItemDef = { id: "?", name: "a curio", tags: ["curio"], food: 0, sell: 1, kind: "curio", desc: "A small curio.", mood: 0, energy: 0, durability: 1, custom: true };
 
 const SELL_BY_KIND: Record<ItemKind, number> = { toy: 2, food: 1, tool: 3, art: 4, wearable: 3, curio: 2 };
@@ -68,7 +70,7 @@ const FOOD_VALUE = 0.3;
 
 export function itemDef(w: Pick<World, "items">, id: ItemId): ItemDef {
   const cat = (ITEMS as Record<string, (typeof ITEMS)["bread"]>)[id];
-  if (cat) return { id, ...cat, kind: CATALOG_KIND[id] ?? "curio", desc: "", mood: 0, energy: 0, durability: 1, custom: false };
+  if (cat) return { id, ...cat, kind: CATALOG_KIND[id] ?? "curio", desc: "", mood: CATALOG_EFFECT[id]?.mood ?? 0, energy: CATALOG_EFFECT[id]?.energy ?? 0, durability: 1, custom: false };
   const c = w.items?.[id];
   if (!c) return { ...FALLBACK, id };
   return {
@@ -93,7 +95,7 @@ export function matchItemId(w: Pick<World, "items">, s: string): ItemId | undefi
   const n = normName(s);
   for (const [id, d] of Object.entries(ITEMS)) if (id === x || d.name.toLowerCase() === x) return id;
   for (const id of Object.keys(w.items ?? {})) if (id === x || normName(w.items[id].name) === n) return id;
-  for (const id of Object.keys(ITEMS)) if (x.includes(id)) return id;
+  for (const id of Object.keys(ITEMS)) if (new RegExp(`(^|[^a-z])${id}([^a-z]|$)`).test(x)) return id; // whole words only ("instead" is not tea)
   return undefined;
 }
 

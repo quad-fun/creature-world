@@ -2,7 +2,7 @@
 // All state is plain JSON so it can live in a single Redis key.
 
 export type PlaceId = "fountain" | "workshop" | "bakery" | "pond" | "park" | "nests";
-export type CatalogItemId = "bread" | "mended-thing" | "trinket" | "potion";
+export type CatalogItemId = "bread" | "tea" | "mended-thing" | "trinket" | "potion";
 /** A catalog id, or "x-<slug>" for an appraised visitor gift (resolved through items.ts itemDef). */
 export type ItemId = string;
 export type ItemKind = "toy" | "food" | "tool" | "art" | "wearable" | "curio";
@@ -191,6 +191,8 @@ export interface Creature {
   interests: Interest[]; // at most 4
   pursuit: Pursuit | null;
   lastPursuitEndT: number;
+  /** The run of back-to-back stall sales of one item kind; cleared by doing anything else (see sellBlocked in sim.ts). */
+  sellRun: { item: ItemId; n: number; t: number } | null;
   received: { from: string; item: ItemId; t: number }[]; // recent gifts, newest last (max 8)
   activity: Activity | null;
   queue: Move[];

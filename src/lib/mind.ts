@@ -5,13 +5,13 @@ import { itemDef } from "./items";
 import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
 import { bondWord, influenceLines, moodWords } from "./affect";
-import { BREAD_PRICE, PLACES, PLACE_IDS, SPECIES, travelMinutes } from "./content";
+import { BREAD_PRICE, PLACES, PLACE_IDS, SPECIES, TEA_PRICE, travelMinutes } from "./content";
 import { BUILDS_PER_DAY, BUILD_CATALOG, buildsToday, activeBuilds } from "./builder";
 import { MAKES_PER_DAY, MAKE_COST, MAX_SLOTS, SITE_COST, SITE_MIN_WORKS, makesToday, slotPrice } from "./library";
 import { BOOKS, BOOKS_PER_DAY, MAX_PENDING_REQUESTS, bookTags, pendingRequests, readsToday } from "./books";
 import { outsideLine } from "./outside";
 import { POSTCARDS_PER_DAY, POSTCARD_MAX, cardsToday } from "./postcards";
-import { clockOf, creaturesAt, describeActivity, MAX_CARRY, POST_COOLDOWN } from "./sim";
+import { clockOf, creaturesAt, describeActivity, MAX_CARRY, MAX_SELL_RUN, POST_COOLDOWN, SELL_RUN_RESET } from "./sim";
 import { interestWord, pursuitWord, staleKeys, stepKindFor } from "./novelty";
 import type { Creature, World } from "./types";
 
@@ -63,7 +63,7 @@ export function persona(c: Creature): string {
 
 Who you are
 - Temperament: ${s.temperament.join(", ")}.
-- You like: ${s.likes.join(", ")}. You dislike: ${s.dislikes.join(", ")}.
+- You like: ${s.likes.join(", ")}. You dislike: ${s.dislikes.join(", ")}. (These are tastes and feelings, not things you own. A thing only exists for you if it is in your inventory or sold in town; never claim to have, own or make something that is not.)
 - Your voice: ${s.voice}
 - Always true of you: ${s.locked.join(" ")}
 - What you have learned about yourself: ${s.self}
@@ -129,6 +129,12 @@ function carryNote(w: World, c: Creature): string {
   const pile = [...counts.entries()].filter(([i, n]) => n >= 3 && itemDef(w, i).sell > 0);
   const full = c.inventory.length >= MAX_CARRY ? ` You cannot carry more than ${MAX_CARRY} things, so you cannot craft until you sell or give something.` : "";
   return pile.length ? ` You are piling up ${pile.map(([i, n]) => `${n} ${itemDef(w, i).name}s`).join(", ")}; they only help once sold at the fountain.${full}` : full;
+}
+
+function stallNote(w: World, c: Creature): string {
+  const r = c.sellRun;
+  if (!r || r.n < MAX_SELL_RUN || w.t - r.t > SELL_RUN_RESET) return "";
+  return ` You have just sold ${r.n} ${itemDef(w, r.item).name} in a row; the stall will not take another from you until you have done something else (unless you are starving).`;
 }
 
 function recentGifts(w: World, c: Creature): string {
@@ -215,7 +221,8 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     bookNote(w, c),
     recentGifts(w, c),
     `Walking time from here: ${walkTimes}.`,
-    `Bread costs ${BREAD_PRICE} coins at the bakery. Stall prices now: ${prices}.`,
+    `Bread costs ${BREAD_PRICE} coins at the bakery, and a cup of tea ${TEA_PRICE} coin (buy_food with item "tea"; it comforts a little, and a third cup in a day does little). Stall prices now: ${prices}.${stallNote(w, c)}`,
+    `Only the things listed in what you carry, in the stall prices above, and bread and tea at the bakery exist. Do not invent or ask for other objects (no teacups, kettles or other goods); to get something new, craft ${itemDef(w, SPECIES[c.species].craft).name} or wait for a visitor's gift.`,
     `Relationships: ${rel}`,
     mem.length ? `Things you remember:\n${mem.map((m) => `- ${m.text}`).join("\n")}` : "You have no strong memories yet.",
     heard ? `Spoken to you since you last decided:\n${heard}` : "",
@@ -226,7 +233,7 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `- walk: place is one of ${PLACE_IDS.join(", ")}`,
     `- speak: target is a creature id (${ids.join(", ")}) who is with you and awake; text is what you say`,
     `- eat: item is food you carry`,
-    `- buy_food: only at the bakery`,
+    `- buy_food: only at the bakery; item is "bread" (the default) or "tea"`,
     `- craft: only at the workshop (you make ${itemDef(w, SPECIES[c.species].craft).name})`,
     `- sell: only at the fountain; item is something you carry that can be sold`,
     `- gift: target is someone here; item is something you carry`,

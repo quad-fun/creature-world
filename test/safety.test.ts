@@ -461,7 +461,7 @@ test("circuit breaker: a dead model is called only a handful of times, then the 
   }
 });
 
-test("catch-up never calls the model: a long absence costs at most one consult per creature", async () => {
+test("catch-up costs at most one model decision per creature (plus the present-moment reflect, decide and make)", async () => {
   const s = getStore();
   await s.save(seedWorld(Date.now()));
   const { model, calls } = scripted();
@@ -530,10 +530,16 @@ test("coins and carrying: a gift cannot overfill a creature's hands, and no move
   const total = () => Object.values(w.creatures).reduce((n, c) => n + c.coins, 0);
   const before = total();
   for (const c of Object.values(w.creatures)) { c.inventory = []; c.place = "nests"; }
-  for (const mv of [{ do: "sell", item: "trinket" }, { do: "buy_food" }, { do: "make", kind: "note" }, { do: "buy_slot" }, { do: "launch_site", title: "t", text: "t" }] as const) {
+  for (const mv of [{ do: "sell", item: "trinket" }, { do: "make", kind: "note" }, { do: "buy_slot" }, { do: "launch_site", title: "t", text: "t" }] as const) {
     for (const c of Object.values(w.creatures)) assert.equal(validateMoves(w, c, [{ ...mv, why: "x" } as never]).moves.length, 0, mv.do); // nothing owned, nowhere near: all refused at the nests
   }
   assert.equal(total(), before);
+  // a buy from the wrong place becomes a walk to the bakery first (the server still checks coins, stock and carrying)
+  const m = w.creatures.moss;
+  assert.deepEqual(validateMoves(w, m, [{ do: "buy_food", why: "x" }]).moves.map((x) => x.do), ["walk", "buy_food"]);
+  m.coins = 0;
+  assert.equal(validateMoves(w, m, [{ do: "buy_food", why: "x" }]).moves.length, 0, "no coins: no walk either");
+  assert.equal(total(), before - 6);
 });
 
 test("rules mode: ten world days from a fresh world keep every invariant", () => {

@@ -9,7 +9,7 @@ export type Rates = { hunger: number; energy: number; loneliness: number; boredo
 export const PLACES: Record<PlaceId, { name: string; x: number; y: number; blurb: string }> = {
   fountain: { name: "the fountain", x: 5, y: 5, blurb: "A market stall sits beside the fountain; the town buys crafted things here." },
   workshop: { name: "the workshop", x: 2, y: 3, blurb: "Benches, tools and good light. Crafting happens here." },
-  bakery: { name: "the bakery", x: 8, y: 3, blurb: "Sells bread for 2 coins while the stock lasts." },
+  bakery: { name: "the bakery", x: 8, y: 3, blurb: "Sells bread for 2 coins while the stock lasts, and a cup of tea for 1." },
   pond: { name: "the pond", x: 8, y: 8, blurb: "Quiet, muddy and cool." },
   park: { name: "the park", x: 4, y: 8, blurb: "Open grass and benches. Good for play and wandering." },
   nests: { name: "the nests", x: 1, y: 7, blurb: "Warm beds. The only place to really sleep." },
@@ -25,6 +25,7 @@ export function travelMinutes(a: PlaceId, b: PlaceId): number {
 
 export const ITEMS: Record<CatalogItemId, { name: string; tags: string[]; food: number; sell: number }> = {
   bread: { name: "bread", tags: ["food", "bread", "warm"], food: 0.5, sell: 0 },
+  tea: { name: "tea", tags: ["tea", "drink", "warm", "comfort"], food: 0.12, sell: 0 },
   "mended-thing": { name: "mended thing", tags: ["mending", "useful"], food: 0, sell: 4 },
   trinket: { name: "shiny trinket", tags: ["shiny", "small"], food: 0, sell: 3 },
   potion: { name: "herbal potion", tags: ["herb", "strange"], food: 0, sell: 5 },
@@ -32,6 +33,7 @@ export const ITEMS: Record<CatalogItemId, { name: string; tags: string[]; food: 
 export const ITEM_IDS = Object.keys(ITEMS) as CatalogItemId[];
 
 export const BREAD_PRICE = 2;
+export const TEA_PRICE = 1; // a warm cup at the bakery; no stock limit, but a creature tires of it (see teaBlocked in sim.ts)
 export const BAKERY_MAX_STOCK = 6;
 export const MAX_CREATURES = 6;
 export const SPECIES_EMOJI = { otter: "🦦", magpie: "🐦‍⬛", toad: "🐸" } as const;
@@ -74,6 +76,7 @@ export function base(
     interests: [],
     pursuit: null,
     lastPursuitEndT: -10000,
+    sellRun: null,
     received: [],
     activity: null,
     queue: [],

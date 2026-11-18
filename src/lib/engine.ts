@@ -4,7 +4,7 @@
 import { decideWithModel, modelAvailable, reflectWithModel } from "./mind";
 import { ruleMoves } from "./rules";
 import { seedWorld } from "./content";
-import { prepareMakes } from "./library";
+import { isLibraryMove, prepareMakes } from "./library";
 import { applyInbox } from "./inbox";
 import { refreshOutside } from "./outside";
 import { appraiseGifts } from "./appraise";
@@ -31,6 +31,9 @@ export const config = () => ({
  */
 export const MODEL_WINDOW_MS = 25_000;
 
+/** A catch-up of at least this many steps (one world hour) earns each creature at most one model decision. */
+export const CATCHUP_MIN_STEPS = 12;
+
 const utcDay = () => new Date().toISOString().slice(0, 10);
 
 function applyRules(w: World, c: Creature) {
@@ -53,6 +56,50 @@ function consolidate(w: World, c: Creature) {
   if (c.diary.length > 60) c.diary = c.diary.slice(-60);
 }
 
+function noteModelError(st: World["stats"], e: unknown) {
+  st.errors++;
+  st.consecutiveErrors++;
+  st.lastError = String((e as Error)?.message ?? e).slice(0, 200);
+  if (st.consecutiveErrors >= 4) st.pausedUntilMs = Date.now() + 10 * 60_000; // circuit breaker
+}
+function noteModelOk(st: World["stats"], u: { in: number; out: number }) {
+  st.modelCalls++;
+  st.consecutiveErrors = 0;
+  st.inputTokens += u.in;
+  st.outputTokens += u.out;
+}
+
+/**
+ * Catch-up flavour: AT MOST ONE model decision per creature per tick, however many steps are caught up (never inside the
+ * step loop, never repeated). It sets a fresh goal that the rules mind then follows for the rest of the absence, and,
+ * if the creature is idle, its first move. Same gates as every other call: the daily cap (it counts against it), the
+ * circuit breaker, and the model window (a call may only START in the first half of the window, so the present-moment
+ * calls that follow still fit). Library moves (make, launch_site) are dropped: they need a second, writing call.
+ */
+async function catchUpThink(w: World, c: Creature, startMs: number) {
+  const day = utcDay();
+  if (c.calls.day !== day) c.calls = { day, n: 0 };
+  const st = w.stats;
+  if (c.calls.n >= config().dailyCalls || (st.pausedUntilMs ?? 0) >= Date.now() || Date.now() >= startMs + config().modelWindowMs / 2) return;
+  try {
+    c.calls.n++;
+    const r = await decideWithModel(w, c);
+    noteModelOk(st, r.usage);
+    if (r.goal) c.goal = r.goal;
+    if (!c.activity && c.queue.length === 0) {
+      const v = validateMoves(w, c, r.moves.filter((m) => !isLibraryMove(String((m as { do?: unknown })?.do) as never)));
+      if (v.moves.length) {
+        c.lastSource = "model";
+        c.queue = v.moves;
+        c.lastDecisionT = w.t;
+        kickQueue(w, c);
+      }
+    }
+  } catch (e) {
+    noteModelError(st, e);
+  }
+}
+
 async function think(w: World, c: Creature, canUseModel: boolean, deadline = Infinity) {
   const day = utcDay();
   if (c.calls.day !== day) c.calls = { day, n: 0 };
@@ -60,18 +107,8 @@ async function think(w: World, c: Creature, canUseModel: boolean, deadline = Inf
   const budgetOk = () => c.calls.n < config().dailyCalls;
   const modelOk = () => canUseModel && budgetOk() && (st.pausedUntilMs ?? 0) < Date.now() && Date.now() < deadline;
 
-  const noteError = (e: unknown) => {
-    st.errors++;
-    st.consecutiveErrors++;
-    st.lastError = String((e as Error)?.message ?? e).slice(0, 200);
-    if (st.consecutiveErrors >= 4) st.pausedUntilMs = Date.now() + 10 * 60_000; // circuit breaker
-  };
-  const noteOk = (u: { in: number; out: number }) => {
-    st.modelCalls++;
-    st.consecutiveErrors = 0;
-    st.inputTokens += u.in;
-    st.outputTokens += u.out;
-  };
+  const noteError = (e: unknown) => noteModelError(st, e);
+  const noteOk = (u: { in: number; out: number }) => noteModelOk(st, u);
 
   // Waking up: write the diary and let the creature revise its own note about itself.
   if (c.sleptSinceReflect && !c.activity) {
@@ -141,6 +178,7 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
   if (!opts.force && Date.now() - world.lastRealMs < cfg.minTickS * 1000) return { ran: false, steps: 0, world };
   if (!(await store.lock(55))) return { ran: false, steps: 0, world };
   try {
+    const tickStart = Date.now();
     world = (await store.load()) ?? world; // reload after taking the lock
     const inbox = (await store.drainInbox()).filter((it) => it && typeof it === "object" && typeof (it as { type?: unknown }).type === "string");
     if (inbox.length) {
@@ -169,6 +207,11 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
     }
     if (steps >= 24) logFeed(world, "world", "system", `Time passes in the town (${Math.round((steps * STEP) / 60)} hours).`);
 
+    // One bounded model decision per creature before a long catch-up (parallel, so it costs one call's time at most).
+    if (steps >= CATCHUP_MIN_STEPS && modelAvailable()) {
+      await Promise.all(Object.values(world.creatures).map((c) => catchUpThink(world, c, tickStart)));
+    }
+
     let need: string[] = [];
     for (let i = 0; i < steps; i++) {
       need = stepWorld(world);
@@ -177,7 +220,7 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
 
     // Present moment: the model gets a say for creatures who need to decide or reflect.
     const useModel = modelAvailable();
-    const deadline = Date.now() + cfg.modelWindowMs;
+    const deadline = tickStart + cfg.modelWindowMs; // no new call starts later than this, counted from the start of the locked tick
     const waking = Object.values(world.creatures).filter((c) => c.sleptSinceReflect && !c.activity).map((c) => c.id);
     const ids = [...new Set([...need, ...waking])];
     await Promise.all(ids.map((id) => think(world, world.creatures[id], useModel, deadline)));

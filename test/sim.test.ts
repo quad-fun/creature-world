@@ -21,6 +21,12 @@ test("a chain like walk then craft validates; wrong-place moves are rejected", (
     { do: "craft", why: "x" },
   ]);
   assert.equal(ok.moves.length, 2);
+  // wrong place: the server swaps in a walk to the workshop (then keeps the craft)
+  const auto = validateMoves(w, moss, [{ do: "craft", why: "x" }]);
+  assert.deepEqual(auto.moves.map((m) => m.do), ["walk", "craft"]);
+  assert.equal(auto.moves[0].place, "workshop");
+  // a move that is invalid anyway is still refused, with no walk
+  moss.energy = 0.05;
   const bad = validateMoves(w, moss, [{ do: "craft", why: "x" }]);
   assert.equal(bad.moves.length, 0);
   assert.match(bad.rejected[0], /not at the workshop/);

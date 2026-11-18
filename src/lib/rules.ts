@@ -2,15 +2,15 @@
 // Used when the model is slow, unfunded, over budget, or disabled, so a creature never freezes.
 // It uses the same novelty/interest/pursuit logic as the world: after urgent needs, each option is
 // scored by how much the creature wants it times how fresh it is, so non-model moments vary too.
-import { needLevel } from "./affect";
-import { BREAD_PRICE, SPECIES } from "./content";
+import { appraise, needLevel } from "./affect";
+import { BREAD_PRICE, ITEMS, SPECIES, TEA_PRICE } from "./content";
 import { familiarity, interestStrength, noteExposure, novelty, payoffScale, stepKindFor, topicOf } from "./novelty";
 import { itemDef } from "./items";
 import { ruleBuildOption } from "./builder";
 import { ruleReadOption } from "./books";
 import { cardLines, cardsToday, checkPostcardMove } from "./postcards";
 import { ruleLibraryOptions } from "./library";
-import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand } from "./sim";
+import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand, sellBlocked, teaBlocked } from "./sim";
 import type { Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
 const LINES: Record<Creature["species"], string[]> = {
@@ -18,6 +18,23 @@ const LINES: Record<Creature["species"], string[]> = {
   magpie: ["Hello hello! Seen anything shiny today?", "Guess what I heard by the fountain!", "Don't tell anyone, but I'm a bit bored!", "I traded a button for a story. Good deal!", "Have you noticed how the fountain sparkles at noon?"],
   toad: ["Ah... hello.", "I have been thinking about mud... it is a fine subject.", "Do you ever... wonder where the pond goes at night?", "The reeds were unusually talkative this morning...", "I made something... it may be a remedy, or a mistake."],
 };
+
+/** What a stated goal nudges toward: keywords in the creature's own intention (set by the model, then followed by the rules mind). */
+const GOAL_WORDS: Partial<Record<MoveKind, string[]>> = {
+  speak: ["talk", "friend", "chat", "company", "visit", "tell", "share", "ask", "listen", "gossip"],
+  play: ["play", "wander", "explore", "walk", "stroll", "park", "pond", "fountain", "relax", "enjoy"],
+  craft: ["craft", "make", "mend", "repair", "fix", "build", "brew", "trinket", "potion", "finish"],
+  read_book: ["read", "book", "story", "stories", "learn"],
+  make: ["write", "note", "journal", "draw", "plan", "diary", "poem"],
+  rest: ["rest", "calm", "quiet", "slow", "recover"],
+  send_postcard: ["postcard", "letter", "far away"],
+  gift: ["gift", "give", "surprise"],
+};
+export function goalBonus(c: Creature, kind: MoveKind): number {
+  const g = c.goal?.toLowerCase();
+  const words = GOAL_WORDS[kind];
+  return g && words && words.some((x) => g.includes(x)) ? 0.25 : 0;
+}
 
 const PLAY_PLACES: PlaceId[] = ["park", "pond", "fountain"];
 
@@ -31,8 +48,10 @@ export function ruleMoves(w: World, c: Creature): Move[] {
   const hunger = needLevel(c, "hunger");
   const lonely = needLevel(c, "loneliness");
   const bored = needLevel(c, "boredom");
-  const food = c.inventory.find((i) => itemDef(w, i).food > 0);
-  const sellables = c.inventory.filter((i) => itemDef(w, i).sell > 0);
+  const food = [...c.inventory].filter((i) => itemDef(w, i).food > 0).sort((a, b) => itemDef(w, b).food - itemDef(w, a).food)[0];
+  const sellables = c.inventory.filter((i) => itemDef(w, i).sell > 0 && !sellBlocked(w, c, i)); // the stall takes only so many of one thing in a row
+  const heldSellables = c.inventory.filter((i) => itemDef(w, i).sell > 0).length;
+  const say = (xs: string[]) => pick(w, xs); // a few ways to put the same thing, chosen by the world's seeded rng
   const craftItem = SPECIES[c.species].craft;
   const awakeHere = creaturesAt(w, c.place, c.id).filter((o) => o.activity?.kind !== "sleep");
 
@@ -40,9 +59,9 @@ export function ruleMoves(w: World, c: Creature): Move[] {
 
   const eatPlan = (): Move[] | null => {
     if (food) return [{ do: "eat", item: food, why: "I am hungry and I have something to eat." }];
-    if (c.coins >= BREAD_PRICE && w.bakeryStock > 0)
+    if (c.coins >= BREAD_PRICE && w.bakeryStock > 0 && c.inventory.length < MAX_CARRY) // hands full: sell something first
       return [...walkTo(c.place, "bakery", "I am hungry; the bakery has bread."), { do: "buy_food", why: "Bread, please." }, { do: "eat", item: "bread", why: "Eating it while it is warm." }];
-    if (sellables.length) return [...walkTo(c.place, "fountain", "I need coins for food."), { do: "sell", item: sellables[0], why: "Selling to buy bread." }];
+    if (sellables.length) return [...walkTo(c.place, "fountain", say(["I need coins for food.", "I should sell something and eat."])), { do: "sell", item: sellables[0], why: say(["Selling to buy bread.", "A sale will pay for a meal.", "Coins for bread, then."]) }];
     if (c.energy > 0.2 && c.inventory.length < MAX_CARRY)
       return [...walkTo(c.place, "workshop", "I need something to sell so I can eat."), { do: "craft", why: "Making something to sell." }];
     return null;
@@ -68,21 +87,20 @@ export function ruleMoves(w: World, c: Creature): Move[] {
   const add = (kind: MoveKind, want: number, moves: Move[], key?: string, topicBonus = 0) => {
     const nov = key ? novelty(c, key, w.t) : 1;
     const walkPenalty = moves.some((m) => m.do === "walk") ? 0.05 : 0;
-    plans.push({ score: want * payoffScale(nov) + topicBonus - walkPenalty + rand(w) * 0.08, moves });
-    void kind;
+    plans.push({ score: want * payoffScale(nov) + topicBonus + goalBonus(c, kind) - walkPenalty + rand(w) * 0.08, moves });
   };
   const pursuit = c.pursuit;
   const pursuitBonus = (kind: MoveKind, topic?: string) => (pursuit && topic === pursuit.topic && stepKindFor(pursuit.topic) === kind ? 0.35 : 0);
 
   if (sellables.length) {
-    const want = Math.min(0.95, 0.3 * sellables.length + (c.coins < 8 ? 0.25 : 0));
-    add("sell", want, [...walkTo(c.place, "fountain", "I have things to sell."), { do: "sell", item: sellables[0], why: "Turning it into coins." }]);
+    const want = Math.min(0.95, 0.3 * heldSellables + (c.coins < 8 ? 0.25 : 0));
+    add("sell", want, [...walkTo(c.place, "fountain", say(["I have things to sell.", "Off to the stall with my wares.", "Time to see what the stall will give me."])), { do: "sell", item: sellables[0], why: say(["Turning it into coins.", "Maybe someone will buy this.", "A fair price, I hope.", "One less thing to carry.", "Putting it out on the stall."]) }], `sell:${sellables[0]}`);
   }
 
   if (c.energy > 0.35 && c.inventory.length < MAX_CARRY) {
     const topic = topicOf("craft", "workshop", craftItem);
-    const want = 0.5 - 0.12 * sellables.length;
-    add("craft", want, [...walkTo(c.place, "workshop", "I feel like making something."), { do: "craft", why: "Keeping my hands busy." }], `craft:${craftItem}`, (topic ? interestStrength(c, topic) * 0.3 : 0) + pursuitBonus("craft", topic));
+    const want = 0.5 - 0.12 * heldSellables;
+    add("craft", want, [...walkTo(c.place, "workshop", say(["I feel like making something.", "The workshop is calling.", "My hands want a job."])), { do: "craft", why: say(["Keeping my hands busy.", "Let me see what I can make.", "Something useful, I hope.", "One more, carefully done."]) }], `craft:${craftItem}`, (topic ? interestStrength(c, topic) * 0.3 : 0) + pursuitBonus("craft", topic));
   }
 
   // something unusual to play with, if carried: new things are worth more
@@ -96,7 +114,7 @@ export function ruleMoves(w: World, c: Creature): Move[] {
   {
     const spot = [...PLAY_PLACES].sort((a, b) => familiarity(c, `play:${a}`, w.t) - familiarity(c, `play:${b}`, w.t) || (a === c.place ? -1 : 1))[0];
     const topic = topicOf("play", spot);
-    add("play", 0.2 + 0.8 * bored, [...walkTo(c.place, spot, bored > 0.4 ? "I am bored; time for a wander somewhere new." : "A change of scene."), { do: "play", why: "Something new to look at." }], `play:${spot}`, (topic ? interestStrength(c, topic) * 0.3 : 0) + pursuitBonus("play", topic));
+    add("play", 0.2 + 0.8 * bored, [...walkTo(c.place, spot, bored > 0.4 ? say(["I am bored; time for a wander somewhere new.", "Enough sitting still; somewhere different.", "I want to see something new."]) : say(["A change of scene.", "A little fresh air.", "A stroll will do me good."])), { do: "play", why: say(["Something new to look at.", "Just a bit of fun.", "Nothing to do but enjoy it."]) }], `play:${spot}`, (topic ? interestStrength(c, topic) * 0.3 : 0) + pursuitBonus("play", topic));
   }
 
   // company
@@ -116,6 +134,21 @@ export function ruleMoves(w: World, c: Creature): Move[] {
     }
   }
 
+  // a cup of tea: cheap comfort, mostly for those who like it; novelty makes a second and third cup less tempting
+  {
+    const likes = appraise(c, ITEMS.tea.tags) > 0;
+    const comfort = needLevel(c, "comfort");
+    const have = c.inventory.includes("tea");
+    const canBuy = c.coins >= TEA_PRICE + BREAD_PRICE && c.inventory.length < MAX_CARRY && !teaBlocked(w, c);
+    if (have || canBuy) {
+      const want = 0.2 + 0.7 * comfort + (likes ? 0.2 : 0) + (c.mood < 0.5 ? 0.1 : 0);
+      const moves: Move[] = have
+        ? [{ do: "eat", item: "tea", why: say(["A cup of tea, while it is warm.", "Tea, at last."]) }]
+        : [...walkTo(c.place, "bakery", say(["I fancy a cup of tea.", "Tea at the bakery sounds right."])), { do: "buy_food", item: "tea", why: "One tea, please." }, { do: "eat", item: "tea", why: "Warm hands, warm cup." }];
+      add("eat", want, moves, "item:tea");
+    }
+  }
+
   for (const o of ruleLibraryOptions(w, c)) add("make", o.want, o.moves, o.key);
   const build = ruleBuildOption(w, c);
   if (build) add("propose_build", build.want, build.moves, build.key);
@@ -130,7 +163,7 @@ export function ruleMoves(w: World, c: Creature): Move[] {
     }
   }
 
-  if (c.energy < 0.7) add("rest", (1 - c.energy) * 0.5, [{ do: "rest", why: "Taking it slowly." }]);
+  if (c.energy < 0.7) add("rest", (1 - c.energy) * 0.5, [{ do: "rest", why: say(["Taking it slowly.", "A short rest.", "Letting the day pass a moment."]) }]);
 
   plans.sort((a, b) => b.score - a.score);
   const best = plans[0];

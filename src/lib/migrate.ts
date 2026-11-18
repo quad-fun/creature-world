@@ -76,6 +76,7 @@ export function migrate(w: World): World {
     c.familiarity ??= {};
     c.pursuit ??= null;
     c.lastPursuitEndT ??= -10000;
+    c.sellRun = c.sellRun && typeof c.sellRun === "object" && typeof c.sellRun.item === "string" && Number.isFinite(c.sellRun.n) && Number.isFinite(c.sellRun.t) ? c.sellRun : null;
     c.received ??= [];
     c.uses ??= {};
     c.interests ??= seedInterests(c);
