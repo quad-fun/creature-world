@@ -5,6 +5,7 @@ import { clientIp, readJson, tickSoon } from "@/lib/http";
 import { checkAll, checkText, visitorMessage } from "@/lib/filter";
 import { sanitizeList, sanitizeName, sanitizeText } from "@/lib/inbox";
 import { getStore } from "@/lib/store";
+import { redeemTicket, ticketUsable } from "@/lib/credits/sinks";
 import type { Creature } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +33,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "someone in town already has that name" }, { status: 409 });
 
   const store = getStore();
+  // Optional paid path: with REQUIRE_TICKET=1 a launch_creature ticket (from /api/credits/spend) is needed. Off by default.
+  const ticket = String(body.ticket ?? "");
+  const needTicket = process.env.REQUIRE_TICKET === "1";
+  if (needTicket && !(await ticketUsable(store.kv, ticket, "launch_creature")))
+    return NextResponse.json({ error: "a launch ticket is required" }, { status: 402 });
   const ok = (await store.hit(`adopt:${clientIp(req)}`, 1, 86400)) && (await store.hit("adopt:all", 3, 86400));
   if (!ok) return NextResponse.json({ error: "adoption limit reached; try tomorrow" }, { status: 429 });
 
+  if (needTicket && !(await redeemTicket(store.kv, ticket, "launch_creature")))
+    return NextResponse.json({ error: "that ticket was already used" }, { status: 402 });
   await store.pushInbox({ type: "adopt", name, species, temperament, likes, dislikes, voice });
   after(tickSoon);
   return NextResponse.json({ ok: true, message: `${name} is on the way to town.` });
