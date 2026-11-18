@@ -4,6 +4,7 @@
 import { decideWithModel, modelAvailable, reflectWithModel } from "./mind";
 import { ruleMoves } from "./rules";
 import { seedWorld } from "./content";
+import { prepareMakes } from "./library";
 import { applyInbox } from "./inbox";
 import { appraiseGifts } from "./appraise";
 import { STEP, kickQueue, logFeed, needsDecision, stepWorld, validateMoves } from "./sim";
@@ -96,6 +97,7 @@ async function think(w: World, c: Creature, canUseModel: boolean) {
       if (r.goal) c.goal = r.goal;
       const v = validateMoves(w, c, r.moves);
       if (v.moves.length) {
+        await prepareMakes(w, c, v.moves, { modelOk, spend: () => c.calls.n++, noteOk, noteError }); // at most one more bounded call
         c.lastSource = "model";
         c.queue = v.moves;
         kickQueue(w, c);

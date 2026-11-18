@@ -89,6 +89,11 @@ export function base(
     lastSource: "none",
     sleptSinceReflect: false,
     goal: "",
+    shelf: [],
+    shelfSlots: 4,
+    workSeq: 0,
+    makes: { day: 0, n: 0 },
+    site: null,
   };
   ensureNeeds(c);
   c.interests = seedInterests(c);

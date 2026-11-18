@@ -6,6 +6,7 @@ import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
 import { bondWord, influenceLines, moodWords } from "./affect";
 import { BREAD_PRICE, PLACES, PLACE_IDS, SPECIES, travelMinutes } from "./content";
+import { MAKES_PER_DAY, MAKE_COST, MAX_SLOTS, SITE_COST, SITE_MIN_WORKS, makesToday, slotPrice } from "./library";
 import { clockOf, creaturesAt, describeActivity, MAX_CARRY, POST_COOLDOWN } from "./sim";
 import { interestWord, pursuitWord, staleKeys, stepKindFor } from "./novelty";
 import type { Creature, World } from "./types";
@@ -22,11 +23,15 @@ export function modelAvailable(): boolean {
 // Nullable (not optional) fields keep the schema valid for every provider behind the Gateway.
 // Counts (1 to 3 moves) are enforced in code because not all providers support array bounds.
 const MoveSchema = z.object({
-  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "wait"]),
+  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "wait"]),
   place: z.string().nullable().describe("walk only: a place id"),
   target: z.string().nullable().describe("speak or gift (or optionally use, to share it): a creature id"),
   item: z.string().nullable().describe("eat, sell, gift or use only: an item name or id"),
-  text: z.string().nullable().describe("speak only: one or two short sentences in your voice"),
+  kind: z.enum(["note", "plan", "journal", "drawing"]).nullable().describe("make only: what to make"),
+  title: z.string().nullable().describe("make: a working title; launch_site: the website title (max 60 characters)"),
+  topic: z.string().nullable().describe("make only: an optional subject, a few words"),
+  n: z.number().nullable().describe("discard or give_work only: the number of a work on your shelf"),
+  text: z.string().nullable().describe("speak only: one or two short sentences in your voice; launch_site: a one-line tagline"),
   why: z.string().describe("one short sentence, first person, why you are doing this"),
 });
 const DecisionSchema = z.object({
@@ -45,7 +50,7 @@ export interface Usage {
 
 const words = (s: string, n: number) => s.trim().split(/\s+/).slice(0, n).join(" ");
 
-function persona(c: Creature): string {
+export function persona(c: Creature): string {
   const s = c.sheet;
   return `You are ${s.name}, a ${c.species} living in a small town. You are an AI character in a simulation: you act by choosing moves, and the world decides what happens.
 
@@ -138,6 +143,13 @@ function postNote(w: World, c: Creature): string {
     : `A creature may post at most once every ${POST_COOLDOWN} world minutes; you may post now.`;
 }
 
+function shelfNote(w: World, c: Creature): string {
+  const strip = (t: string) => t.replace(/[<>]/g, "");
+  const works = c.shelf.map((k) => `#${k.n} ${k.kind} "${strip(k.title)}"`).join("; ");
+  const site = c.site ? ` You have a website, "${strip(c.site.title)}".` : c.shelf.length >= SITE_MIN_WORKS ? ` You could launch a website for ${SITE_COST} coins.` : "";
+  return `Your shelf (${c.shelf.length} of ${c.shelfSlots} slots): ${works || "empty"}. You have made ${makesToday(w, c)} of ${MAKES_PER_DAY} pieces today.${site}`;
+}
+
 export function buildDecisionPrompt(w: World, c: Creature): { system: string; prompt: string } {
   const clk = clockOf(w.t);
   const others = creaturesAt(w, c.place, c.id);
@@ -172,6 +184,7 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `Your current intention: ${c.goal || "none yet; choose something you would like to do or become in this town"}`,
     `You carry: ${carry}. Coins: ${c.coins}.${carryNote(w, c)}`,
     itemNotes(w, c),
+    shelfNote(w, c),
     recentGifts(w, c),
     `Walking time from here: ${walkTimes}.`,
     `Bread costs ${BREAD_PRICE} coins at the bakery. Stall prices now: ${prices}.`,
@@ -191,6 +204,9 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `- gift: target is someone here; item is something you carry`,
     `- use: item is a non-food thing you carry that is not plain bread or a stall good (a toy, tool, art, wearable or curio); target is optional, someone here to share it with. It lifts mood a little, wears out after a number of uses, and pays less when repeated.`,
     `- post: text is a short public notice or postcard for the town board; visitors from outside read it too. Rare: only when you have something worth saying. ${postNote(w, c)}`,
+    `- make: only at the workshop or the park; kind is note, plan, journal or drawing; title and topic are optional. Costs ${MAKE_COST} coins and some energy, takes about 40 minutes, at most ${MAKES_PER_DAY} a day, and needs a free shelf slot. You will write it afterwards in your own voice. Making the same kind again and again pays less.`,
+    `- discard (n is a work number) or give_work (target is someone here, n is a work number): free a slot. buy_slot: only at the fountain, costs ${slotPrice(c.shelfSlots)} coins (up to ${MAX_SLOTS} slots).`,
+    `- launch_site: only at the workshop, once; needs ${SITE_MIN_WORKS} works and ${SITE_COST} coins; set title and text (a tagline). It shows your works and diary on a public page.`,
     `- rest, play (park, pond or fountain), wait`,
     `- sleep: only at the nests`,
     `Doing the same thing again and again pays less and makes you bored; something new lifts your mood and eases boredom. Mixing it up (a new place, a new person, a different activity) is healthy.`,

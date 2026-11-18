@@ -5,6 +5,7 @@ import { itemDef } from "./items";
 import { MAX_CREATURES, PLACES } from "./content";
 import { config } from "./engine";
 import { MODEL_ID, modelAvailable } from "./mind";
+import { MAX_SLOTS, slotPrice } from "./library";
 import { clockOf, describeActivity } from "./sim";
 import type { Creature, World } from "./types";
 
@@ -34,6 +35,10 @@ export function creatureView(w: World, c: Creature) {
     interests: c.interests.filter((i) => i.strength >= 0.15).map((i) => ({ topic: i.topic, word: interestWord(i.strength), strength: i.strength })),
     pursuit: c.pursuit ? { title: c.pursuit.title, word: pursuitWord(c.pursuit), progress: c.pursuit.progress, steps: c.pursuit.steps, setbacks: c.pursuit.setbacks } : null,
     coins: c.coins,
+    shelf: c.shelf.map((k) => ({ n: k.n, kind: k.kind, title: k.title })),
+    shelfSlots: c.shelfSlots,
+    nextSlotPrice: c.shelfSlots < MAX_SLOTS ? slotPrice(c.shelfSlots) : null,
+    site: c.site ? { title: c.site.title, tagline: c.site.tagline } : null,
     inventory: c.inventory.map((i) => itemDef(w, i).name),
     source: c.lastSource,
     callsToday: c.calls.n,

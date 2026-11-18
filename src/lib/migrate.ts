@@ -16,6 +16,11 @@ export function migrate(w: World): World {
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
     c.goal ??= "";
+    c.shelf ??= [];
+    c.shelfSlots ??= 4;
+    c.workSeq ??= c.shelf.reduce((m, x) => Math.max(m, x.n), 0);
+    c.makes ??= { day: 0, n: 0 };
+    c.site ??= null;
     if (c.drives || c.affect) {
       // old model: five drives plus valence/arousal and a slow mood -> mood, energy and influences
       const d = c.drives;

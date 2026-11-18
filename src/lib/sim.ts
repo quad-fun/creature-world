@@ -11,6 +11,7 @@ import {
   travelMinutes,
 } from "./content";
 import { itemDef, matchItemId, touchItem, useEffect } from "./items";
+import { checkLibraryMove, cleanLine, finishLibraryMove, isLibraryMove, makesToday, startLibraryMove, WORK_KINDS } from "./library";
 import type { Bond, Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
 export const STEP = 5; // world minutes per simulation step
@@ -18,7 +19,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "wait"];
 
 // ---------- small helpers ----------
 
@@ -119,6 +120,16 @@ export function describeActivity(w: World, c: Creature): string {
       return "pinning a notice";
     case "buy_food":
       return "buying bread";
+    case "make":
+      return `making a ${m.kind ?? "piece"}`;
+    case "discard":
+      return "tidying the shelf";
+    case "give_work":
+      return "handing over something made";
+    case "buy_slot":
+      return "buying shelf space";
+    case "launch_site":
+      return "building a website";
     default:
       return "lingering";
   }
@@ -146,7 +157,11 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
   if (typeof r.target === "string") m.target = matchCreature(w, r.target);
   if (typeof r.item === "string") m.item = matchItem(w, r.item);
   if (typeof r.text === "string" && r.text.trim()) m.text = clean(r.text, 240);
-  return m;
+  if (typeof r.kind === "string" && WORK_KINDS.includes(r.kind as never)) m.kind = r.kind as Move["kind"];
+  if (typeof r.title === "string") m.title = cleanLine(r.title, 60) ?? undefined; // checked; a failing title is dropped
+  if (typeof r.topic === "string") m.topic = cleanLine(r.topic, 40) ?? undefined;
+  if (typeof r.n === "number" && Number.isInteger(r.n) && r.n > 0) m.n = r.n;
+  return m; // note: `piece` is never read from model output
 }
 
 interface Projection {
@@ -154,6 +169,10 @@ interface Projection {
   inv: ItemId[];
   coins: number;
   stock: number;
+  shelf: number;
+  slots: number;
+  makes: number;
+  site: boolean;
 }
 
 function takeItem(inv: ItemId[], want: ItemId | undefined, ok: (i: ItemId) => boolean): ItemId | undefined {
@@ -260,6 +279,7 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
     case "play":
       return ["park", "pond", "fountain"].includes(p.place) ? null : "nowhere to play here";
     default:
+      if (isLibraryMove(m.do)) return checkLibraryMove(w, c, m, p);
       return null; // rest, wait
   }
 }
@@ -267,7 +287,7 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
 export function validateMoves(w: World, c: Creature, raw: unknown[]): { moves: Move[]; rejected: string[] } {
   const moves: Move[] = [];
   const rejected: string[] = [];
-  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock };
+  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site };
   for (const r of raw.slice(0, 3)) {
     const m = normalizeMove(w, r);
     if (!m) {
@@ -443,6 +463,7 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
       return null;
     }
     default:
+      if (isLibraryMove(m.do)) return startLibraryMove(w, c, m, begin, say);
       begin(15);
       say(`${name} lingers.`);
       return null;
@@ -629,6 +650,10 @@ function finishActivity(w: World, c: Creature) {
       relieve(c, "comfort", 0.2);
       remember(w, c, "I woke up after sleeping.", 0.25);
       logFeed(w, c.id, "move", `${name} wakes up.`);
+      break;
+    case "make":
+    case "launch_site":
+      finishLibraryMove(w, c, m);
       break;
     default:
       break;

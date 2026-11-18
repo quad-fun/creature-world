@@ -5,8 +5,11 @@ import { seedWorld } from "../src/lib/content";
 import { decideWithModel, reflectWithModel } from "../src/lib/mind";
 import { validateMoves } from "../src/lib/sim";
 
-const mockReturning = (obj: unknown) =>
-  new MockLanguageModelV4({
+const NEW_MOVE_FIELDS = { kind: null, title: null, topic: null, n: null };
+const mockReturning = (obj: unknown) => {
+  const o = obj as { moves?: object[] };
+  if (o.moves) o.moves = o.moves.map((m) => ({ ...NEW_MOVE_FIELDS, ...m }));
+  return new MockLanguageModelV4({
     doGenerate: async () => ({
       content: [{ type: "text", text: JSON.stringify(obj) }],
       finishReason: { unified: "stop", raw: "stop" },
@@ -14,6 +17,7 @@ const mockReturning = (obj: unknown) =>
       warnings: [],
     }),
   } as never);
+};
 
 test("model output is parsed, token usage is read, and the chain validates", async () => {
   const w = seedWorld(0);

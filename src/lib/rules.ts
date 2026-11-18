@@ -6,6 +6,7 @@ import { needLevel } from "./affect";
 import { BREAD_PRICE, SPECIES } from "./content";
 import { familiarity, interestStrength, noteExposure, novelty, payoffScale, stepKindFor, topicOf } from "./novelty";
 import { itemDef } from "./items";
+import { ruleLibraryOptions } from "./library";
 import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand } from "./sim";
 import type { Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
@@ -111,6 +112,8 @@ export function ruleMoves(w: World, c: Creature): Move[] {
       add("walk", 0.9 * lonely, [{ do: "walk", place: spot, why: "I want some company." }]);
     }
   }
+
+  for (const o of ruleLibraryOptions(w, c)) add("make", o.want, o.moves, o.key);
 
   if (c.energy < 0.7) add("rest", (1 - c.energy) * 0.5, [{ do: "rest", why: "Taking it slowly." }]);
 

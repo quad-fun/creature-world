@@ -34,7 +34,37 @@ export type MoveKind =
   | "play"
   | "use"
   | "post"
+  | "make"
+  | "discard"
+  | "give_work"
+  | "buy_slot"
+  | "launch_site"
   | "wait";
+
+export type WorkKind = "note" | "plan" | "journal" | "drawing";
+/** A drawing is a short list of whitelisted shapes; the SVG is always rendered by the server (library.ts). */
+export type Shape =
+  | { t: "rect"; x: number; y: number; w: number; h: number; fill: string }
+  | { t: "circle"; x: number; y: number; r: number; fill: string }
+  | { t: "line"; x: number; y: number; x2: number; y2: number; stroke: string; sw: number }
+  | { t: "path"; pts: number[]; stroke: string; sw: number };
+/** A finished piece on a creature's shelf. All text was checked; shapes were sanitised. */
+export interface Work {
+  n: number; // unique per shelf owner, used in /c/[id]/w/[n]
+  kind: WorkKind;
+  title: string;
+  body: string; // empty for drawings
+  shapes?: Shape[];
+  t: number; // world minute made
+  ts: number; // real ms made (for the feed)
+  by: string; // id of the creature that made it
+  from?: string; // id of the creature that gave it to this shelf
+}
+export interface Site {
+  title: string;
+  tagline: string;
+  t: number;
+}
 
 /**
  * Mood and energy (0..1) are the only core bars. Everything else is a named, temporary Influence
@@ -83,6 +113,11 @@ export interface Move {
   place?: PlaceId; // walk
   target?: string; // speak / gift: creature id
   item?: ItemId; // eat / sell / gift / use
+  kind?: WorkKind; // make
+  title?: string; // make / launch_site
+  topic?: string; // make: optional subject
+  n?: number; // discard / give_work: work number
+  piece?: { title: string; body: string; shapes?: Shape[] }; // set only by the engine after writing; never from model output
   text?: string; // speak
   why: string;
 }
@@ -150,6 +185,11 @@ export interface Creature {
   lastSource: "model" | "rules" | "none";
   sleptSinceReflect: boolean;
   goal: string; // a short standing intention the creature keeps across decisions
+  shelf: Work[]; // finished works, limited by shelfSlots
+  shelfSlots: number;
+  workSeq: number;
+  makes: { day: number; n: number }; // works started on this world day
+  site: Site | null;
   lastPostT?: number; // world minute of the last notice pinned to the board
 }
 
