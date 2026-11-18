@@ -6,6 +6,7 @@ import { MAX_CREATURES, PLACES } from "./content";
 import { config } from "./engine";
 import { MODEL_ID, modelAvailable } from "./mind";
 import { MAX_SLOTS, slotPrice } from "./library";
+import { publicBuilds, pendingBuilds } from "./builder";
 import { clockOf, describeActivity } from "./sim";
 import type { Creature, World } from "./types";
 
@@ -61,6 +62,8 @@ export function publicView(w: World, storage: "redis" | "memory") {
     clock: { day: clk.day, label: clk.label, period: clk.period, isNight: clk.isNight, t: w.t },
     places: Object.fromEntries(Object.entries(PLACES).map(([id, p]) => [id, { name: p.name, blurb: p.blurb }])),
     bakeryStock: w.bakeryStock,
+    builds: publicBuilds(w),
+    pendingBuilds: pendingBuilds(w).length,
     market: Object.fromEntries(Object.entries(w.market).map(([k, v]) => [k, Math.max(1, Math.round(itemDef(w, k).sell * v))])),
     creatures: Object.values(w.creatures).map((c) => creatureView(w, c)),
     feed: w.feed.slice(-80),

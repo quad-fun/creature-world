@@ -93,6 +93,7 @@ export function base(
     shelfSlots: 4,
     workSeq: 0,
     makes: { day: 0, n: 0 },
+    buildsMade: { day: 0, n: 0 },
     site: null,
   };
   ensureNeeds(c);
@@ -157,5 +158,7 @@ export function seedWorld(nowMs: number): World {
     stats: { modelCalls: 0, fallbacks: 0, inputTokens: 0, outputTokens: 0, errors: 0, consecutiveErrors: 0 },
     board: [],
     boardSeq: 0,
+    builds: [],
+    buildSeq: 0,
   };
 }

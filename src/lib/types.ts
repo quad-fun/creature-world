@@ -39,7 +39,23 @@ export type MoveKind =
   | "give_work"
   | "buy_slot"
   | "launch_site"
+  | "propose_build"
   | "wait";
+
+/** What a creature may propose to build. A fixed catalog (builder.ts); nothing else is buildable. */
+export type BuildKind = "bench" | "garden" | "flowerbox" | "lantern" | "sign";
+/** A small addition to a place. Pure data: kind, place id and one short checked label. */
+export interface Build {
+  id: number;
+  kind: BuildKind;
+  place: PlaceId;
+  text?: string; // sign label; passed cleanBuildText
+  by: string; // creature id
+  cost: number; // coins paid (held while pending)
+  status: "pending" | "active";
+  createdT: number;
+  expiresT: number; // pending: lapses; active: weathers away
+}
 
 export type WorkKind = "note" | "plan" | "journal" | "drawing";
 /** A drawing is a short list of whitelisted shapes; the SVG is always rendered by the server (library.ts). */
@@ -114,6 +130,7 @@ export interface Move {
   target?: string; // speak / gift: creature id
   item?: ItemId; // eat / sell / gift / use
   kind?: WorkKind; // make
+  build?: BuildKind; // propose_build (text is an optional label)
   title?: string; // make / launch_site
   topic?: string; // make: optional subject
   n?: number; // discard / give_work: work number
@@ -189,6 +206,7 @@ export interface Creature {
   shelfSlots: number;
   workSeq: number;
   makes: { day: number; n: number }; // works started on this world day
+  buildsMade: { day: number; n: number }; // build proposals on this world day
   site: Site | null;
   lastPostT?: number; // world minute of the last notice pinned to the board
 }
@@ -255,5 +273,7 @@ export interface World {
   stats: Stats;
   board: BoardEntry[];
   boardSeq: number;
+  builds: Build[]; // pending and active, bounded by builder.ts caps
+  buildSeq: number;
   event?: { day: number; name: string; text: string };
 }

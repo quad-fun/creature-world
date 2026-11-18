@@ -1,7 +1,19 @@
 // Older saved worlds lack newer fields. Fill them in when a world is loaded. Idempotent.
 import { clamp, ensureNeeds } from "./affect";
 import { seedInterests } from "./novelty";
-import type { Creature, World } from "./types";
+import { MAX_ACTIVE_BUILDS, MAX_PENDING_BUILDS, cleanBuildText, isBuildKind } from "./builder";
+import { PLACE_IDS } from "./content";
+import type { Build, Creature, World } from "./types";
+
+/** A stored build must fit the schema exactly; anything else (hand-edited or corrupt data) is dropped on load. */
+function validBuild(b: unknown): b is Build {
+  const x = b as Build;
+  return (
+    !!x && typeof x === "object" && Number.isInteger(x.id) && isBuildKind(x.kind) && PLACE_IDS.includes(x.place) && (x.status === "active" || x.status === "pending") &&
+    typeof x.by === "string" && Number.isFinite(x.cost) && x.cost >= 0 && x.cost <= 10 && Number.isFinite(x.createdT) && Number.isFinite(x.expiresT) &&
+    (x.text === undefined || cleanBuildText(x.text) !== null)
+  );
+}
 
 type Legacy = Creature & {
   drives?: { food: number; energy: number; social: number; curiosity: number; comfort: number };
@@ -12,6 +24,8 @@ export function migrate(w: World): World {
   w.board ??= [];
   w.boardSeq ??= 0;
   w.items ??= {};
+  w.builds = Array.isArray(w.builds) ? w.builds.filter(validBuild).slice(0, MAX_ACTIVE_BUILDS + MAX_PENDING_BUILDS) : [];
+  w.buildSeq = Math.max(typeof w.buildSeq === "number" && Number.isFinite(w.buildSeq) ? w.buildSeq : 0, ...w.builds.map((b) => b.id));
   w.appraisals ??= { day: "", n: 0 };
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
@@ -21,6 +35,7 @@ export function migrate(w: World): World {
     c.workSeq ??= c.shelf.reduce((m, x) => Math.max(m, x.n), 0);
     c.makes ??= { day: 0, n: 0 };
     c.site ??= null;
+    c.buildsMade ??= { day: 0, n: 0 };
     if (c.drives || c.affect) {
       // old model: five drives plus valence/arousal and a slow mood -> mood, energy and influences
       const d = c.drives;

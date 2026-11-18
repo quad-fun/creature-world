@@ -108,6 +108,12 @@ export function Town({ initial }: { initial: PublicWorld }) {
               <small>
                 {id === "bakery" ? `${w.bakeryStock} loaves left` : id === "fountain" ? `stall: ${Object.entries(w.market).map(([k, v]) => `${k.replace("-", " ")} ${v}`).join(", ")}` : p.blurb}
               </small>
+              {w.builds.filter((b) => b.place === id).map((b) => (
+                <small key={b.id} className="build">
+                  {"\u2022"} {b.label}
+                  {b.text ? `: \u201c${b.text}\u201d` : ""}
+                </small>
+              ))}
               {here.map((c) => (
                 <span key={c.id} className={`chip ${c.activity === "asleep" ? "asleep" : ""}`}>
                   {c.emoji} {c.name}

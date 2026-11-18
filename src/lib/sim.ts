@@ -10,6 +10,7 @@ import {
   SPECIES,
   travelMinutes,
 } from "./content";
+import { checkBuildMove, noticeBuilds, startBuildMove, sweepBuilds, buildsToday, isBuildKind } from "./builder";
 import { itemDef, matchItemId, touchItem, useEffect } from "./items";
 import { checkLibraryMove, cleanLine, finishLibraryMove, isLibraryMove, makesToday, startLibraryMove, WORK_KINDS } from "./library";
 import type { Bond, Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
@@ -19,7 +20,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "wait"];
 
 // ---------- small helpers ----------
 
@@ -130,6 +131,8 @@ export function describeActivity(w: World, c: Creature): string {
       return "buying shelf space";
     case "launch_site":
       return "building a website";
+    case "propose_build":
+      return "putting up something for the town";
     default:
       return "lingering";
   }
@@ -157,6 +160,11 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
   if (typeof r.target === "string") m.target = matchCreature(w, r.target);
   if (typeof r.item === "string") m.item = matchItem(w, r.item);
   if (typeof r.text === "string" && r.text.trim()) m.text = cleanLine(r.text, 240) ?? undefined; // speech, posts and taglines: a failing text is dropped (the move then has nothing to say)
+  if (m.do === "propose_build") {
+    if (isBuildKind(r.build)) m.build = r.build;
+    if (typeof r.place === "string" && r.place.trim() && !m.place) m.build = undefined; // an unknown place is not quietly swapped for this one
+    if (typeof r.text === "string" && r.text.trim() && m.text === undefined) m.build = undefined; // a label that fails the filter voids the proposal, it is not quietly dropped
+  }
   if (typeof r.kind === "string" && WORK_KINDS.includes(r.kind as never)) m.kind = r.kind as Move["kind"];
   if (typeof r.title === "string") m.title = cleanLine(r.title, 60) ?? undefined; // checked; a failing title is dropped
   if (typeof r.topic === "string") m.topic = cleanLine(r.topic, 40) ?? undefined;
@@ -173,6 +181,7 @@ interface Projection {
   slots: number;
   makes: number;
   site: boolean;
+  builds: number;
 }
 
 function takeItem(inv: ItemId[], want: ItemId | undefined, ok: (i: ItemId) => boolean): ItemId | undefined {
@@ -279,6 +288,8 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       return p.place === "nests" ? null : "can only sleep at the nests";
     case "play":
       return ["park", "pond", "fountain"].includes(p.place) ? null : "nowhere to play here";
+    case "propose_build":
+      return checkBuildMove(w, c, m, p);
     default:
       if (isLibraryMove(m.do)) return checkLibraryMove(w, c, m, p);
       return null; // rest, wait
@@ -288,7 +299,7 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
 export function validateMoves(w: World, c: Creature, raw: unknown[]): { moves: Move[]; rejected: string[] } {
   const moves: Move[] = [];
   const rejected: string[] = [];
-  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site };
+  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site, builds: buildsToday(w, c) };
   for (const r of raw.slice(0, 3)) {
     const m = normalizeMove(w, r);
     if (!m) {
@@ -463,6 +474,9 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
       say(`${name} plays.`);
       return null;
     }
+    case "propose_build":
+      noteExposure(c, "build:new", w.t);
+      return startBuildMove(w, c, m, begin, say, (t) => remember(w, c, t, 0.4));
     default:
       if (isLibraryMove(m.do)) return startLibraryMove(w, c, m, begin, say);
       begin(15);
@@ -546,6 +560,7 @@ function finishActivity(w: World, c: Creature) {
         impulse(c, 0.02 * nov);
       }
       noteExposure(c, `place:${m.place}`, w.t);
+      noticeBuilds(w, c);
       break;
     }
     case "eat": {
@@ -621,6 +636,7 @@ function finishActivity(w: World, c: Creature) {
     case "rest":
       c.energy = clamp(c.energy + 0.1, ENERGY_FLOOR, 1);
       relieve(c, "comfort", 0.05);
+      noticeBuilds(w, c);
       break;
     case "play": {
       const nov = practise(w, c, `play:${c.place}`);
@@ -635,6 +651,7 @@ function finishActivity(w: World, c: Creature) {
           touchBond(o, c.id, { familiarity: 0.02, fondness: 0.01 });
         }
       }
+      noticeBuilds(w, c);
       impulse(c, 0.04 * pm, 0.02);
       addInfluence(c, "joy", others.length ? "played with company" : "a bit of play", 0.25 * pm + (others.length ? 0.1 : 0));
       const topic = topicOf("play", c.place);
@@ -755,6 +772,7 @@ function maybeEvent(w: World) {
 export function stepWorld(w: World): string[] {
   w.t += STEP;
   maybeEvent(w);
+  if (w.t % 60 < STEP) sweepBuilds(w, (x, who, kind, text) => logFeed(x, who, kind, text));
   if (w.t % 60 < STEP && w.bakeryStock < BAKERY_MAX_STOCK) w.bakeryStock += 1;
   for (const k of Object.keys(w.market)) w.market[k] = Math.min(1, w.market[k] + 0.015);
   const need: string[] = [];
