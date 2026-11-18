@@ -55,18 +55,23 @@ export async function apply(kv: Kv, account: string, delta: number, kind: EntryK
     if (prior && prior !== "pending") return { entry: JSON.parse(prior) as Entry, replayed: true };
     throw new Error("a request with this idempotency key is still in progress");
   }
+  let moved = false; // balance changed and not yet rolled back
   try {
     const after = await kv.incrby(balKey(account), delta);
+    moved = true;
     if (after < 0 || after > MAX_BALANCE_CENTS) {
+      moved = false;
       await kv.incrby(balKey(account), -delta); // roll back
       if (after < 0) throw new InsufficientFunds();
       throw new Error("balance cap reached");
     }
     const entry: Entry = { id: randomUUID(), ts: Date.now(), account, delta, kind, ref, balanceAfter: after };
-    await kv.rpush(logKey(account), JSON.stringify(entry));
+    await kv.rpush(logKey(account), JSON.stringify(entry)); // the log is the audit trail: no log, no change
+    moved = false;
     if (ik) await kv.set(ik, JSON.stringify(entry));
     return { entry, replayed: false };
   } catch (e) {
+    if (moved) await kv.incrby(balKey(account), -delta).catch(() => undefined); // balance and log must not disagree
     if (ik) await kv.del(ik); // failed attempts may be retried
     throw e;
   }

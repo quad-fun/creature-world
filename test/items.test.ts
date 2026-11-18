@@ -86,7 +86,7 @@ test("daily appraisal cap: beyond it only the free rules appraisal is used", asy
   const counter = { n: 0 };
   const model = mockReturning(good, counter);
   const names = ["Kite", "Ball", "Top", "Doll", "Dice", "Cards", "Marble", "Puzzle"];
-  await appraiseGifts(w, names.map((n) => gift(n)), { model, useModel: true });
+  await appraiseGifts(w, names.map((n) => gift(n)), { model, useModel: true, maxModelCalls: 99 }); // per-tick cap lifted to exercise the daily cap
   assert.equal(counter.n, 6);
   assert.equal(Object.keys(w.items).length, 8);
   assert.equal(Object.values(w.items).filter((i) => i.source === "rules").length, 2);

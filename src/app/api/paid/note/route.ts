@@ -6,8 +6,10 @@ import { sanitizeName, sanitizeText } from "@/lib/inbox";
 import { getProvider } from "@/lib/credits/provider";
 import { paymentRequired } from "@/lib/credits/x402";
 import { getStore } from "@/lib/store";
+import { own } from "@/lib/own";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // x402-style paid note (STUB). No header: 402 with payment requirements. Fake provider only: a fake test header is
 // accepted and the note goes through the same filter, rate limits and inbox as /api/visit. Any other provider: header refused.
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
     }
   }
   const { world } = await loadWorld();
-  if (!world.creatures[to]) return NextResponse.json({ error: "no such creature" }, { status: 404 });
+  if (!own(world.creatures, to)) return NextResponse.json({ error: "no such creature" }, { status: 404 });
   if (!((await store.hit(`note:${ip}`, 6, 3600)) && (await store.hit("note:all", 80, 86400))))
     return NextResponse.json({ error: "slow down a little; try again later" }, { status: 429 });
   if (!(await store.kv.setnx(`x402:nonce:${pay.nonce}`, "1"))) return NextResponse.json({ error: "payment already used" }, { status: 402 });

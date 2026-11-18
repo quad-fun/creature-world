@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadWorld } from "@/lib/engine";
+import { own } from "@/lib/own";
 import { publicDiary, renderSvg } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function SitePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { world } = await loadWorld();
-  const c = world.creatures[id];
+  const c = own(world.creatures, id);
   if (!c?.site) notFound();
   const diary = publicDiary(c);
   return (

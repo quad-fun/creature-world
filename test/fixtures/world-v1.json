@@ -1,0 +1,3639 @@
+{
+ "version": 1,
+ "t": 3300,
+ "lastRealMs": 0,
+ "rng": 2898987957,
+ "creatures": {
+  "moss": {
+   "id": "moss",
+   "species": "otter",
+   "emoji": "🦦",
+   "sheet": {
+    "name": "Moss",
+    "temperament": [
+     "patient",
+     "nosy",
+     "bad at goodbyes"
+    ],
+    "likes": [
+     "mending",
+     "rain",
+     "small gifts",
+     "bread",
+     "tea"
+    ],
+    "dislikes": [
+     "loud places",
+     "being rushed",
+     "waste"
+    ],
+    "voice": "Short sentences. Dry humour. Never uses exclamation marks.",
+    "locked": [
+     "Moss never lies about what something cost.",
+     "Moss never leaves the town."
+    ],
+    "self": "I like fixing things that other people have given up on."
+   },
+   "place": "workshop",
+   "drives": {
+    "food": 0.5784000000000018,
+    "energy": 0.9124999999999971,
+    "social": 0.6095999999999924,
+    "curiosity": 0.9565000000000021,
+    "comfort": 1
+   },
+   "affect": {
+    "valence": 0.38614437042118077,
+    "arousal": 0.37207810053567014
+   },
+   "mood": 0.3685016307572742,
+   "baseline": 0.2,
+   "activity": {
+    "kind": "craft",
+    "until": 3320,
+    "move": {
+     "do": "craft",
+     "why": "Keeping my hands busy."
+    }
+   },
+   "queue": [],
+   "inventory": [
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing",
+    "mended-thing"
+   ],
+   "coins": 12,
+   "bonds": {
+    "pip": {
+     "familiarity": 0.18,
+     "trust": 0,
+     "fondness": 0.12000000000000001
+    }
+   },
+   "memories": [
+    {
+     "t": 425,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.2,
+     "salience": 0.3
+    },
+    {
+     "t": 470,
+     "text": "I made a mended thing.",
+     "valence": 0.571021463975315,
+     "salience": 0.6
+    },
+    {
+     "t": 495,
+     "text": "Sold mended thing for 4 coins.",
+     "valence": 0.5521654395445794,
+     "salience": 0.25
+    },
+    {
+     "t": 555,
+     "text": "I made a mended thing.",
+     "valence": 0.6658457852049409,
+     "salience": 0.6
+    },
+    {
+     "t": 600,
+     "text": "I made a mended thing.",
+     "valence": 0.7258330221502302,
+     "salience": 0.6
+    },
+    {
+     "t": 645,
+     "text": "I made a mended thing.",
+     "valence": 0.7334417858880442,
+     "salience": 0.6
+    },
+    {
+     "t": 690,
+     "text": "I made a mended thing.",
+     "valence": 0.7130267563462186,
+     "salience": 0.6
+    },
+    {
+     "t": 920,
+     "text": "I woke up after sleeping.",
+     "valence": 0.29335704374182786,
+     "salience": 0.25
+    },
+    {
+     "t": 970,
+     "text": "I ate bread and it was badly needed.",
+     "valence": 0.6280161807573732,
+     "salience": 0.7
+    },
+    {
+     "t": 995,
+     "text": "Sold mended thing for 4 coins.",
+     "valence": 0.6148765786350303,
+     "salience": 0.25
+    },
+    {
+     "t": 1055,
+     "text": "I made a mended thing.",
+     "valence": 0.7348353289036462,
+     "salience": 0.6
+    },
+    {
+     "t": 1100,
+     "text": "I made a mended thing.",
+     "valence": 0.7932081738493111,
+     "salience": 0.6
+    },
+    {
+     "t": 1145,
+     "text": "I made a mended thing.",
+     "valence": 0.7926938662142273,
+     "salience": 0.6
+    },
+    {
+     "t": 1190,
+     "text": "I made a mended thing.",
+     "valence": 0.7640994205902115,
+     "salience": 0.6
+    },
+    {
+     "t": 1235,
+     "text": "I made a mended thing.",
+     "valence": 0.7222408569838719,
+     "salience": 0.6
+    },
+    {
+     "t": 1300,
+     "text": "I ate bread.",
+     "valence": 0.6630130977141864,
+     "salience": 0.5
+    },
+    {
+     "t": 1555,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3687679179643944,
+     "salience": 0.25
+    },
+    {
+     "t": 1615,
+     "text": "I made a mended thing.",
+     "valence": 0.6279294712468662,
+     "salience": 0.6
+    },
+    {
+     "t": 1660,
+     "text": "I made a mended thing.",
+     "valence": 0.7248960689753199,
+     "salience": 0.6
+    },
+    {
+     "t": 1770,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3859109849216222,
+     "salience": 0.25
+    },
+    {
+     "t": 1800,
+     "text": "Today: Rain drifts over the town all morning.",
+     "valence": 0.5881623013862964,
+     "salience": 0.3
+    },
+    {
+     "t": 1830,
+     "text": "I made a mended thing.",
+     "valence": 0.7285109054938195,
+     "salience": 0.6
+    },
+    {
+     "t": 1875,
+     "text": "I made a mended thing.",
+     "valence": 0.7398493155056027,
+     "salience": 0.6
+    },
+    {
+     "t": 1885,
+     "text": "Pip said to me: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.701199180527847,
+     "salience": 0.35
+    },
+    {
+     "t": 1910,
+     "text": "I ate bread.",
+     "valence": 0.8769295519093903,
+     "salience": 0.5
+    },
+    {
+     "t": 1935,
+     "text": "Sold mended thing for 4 coins.",
+     "valence": 0.7518371021958106,
+     "salience": 0.25
+    },
+    {
+     "t": 1995,
+     "text": "I made a mended thing.",
+     "valence": 0.7352195535703954,
+     "salience": 0.6
+    },
+    {
+     "t": 2020,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.613607630275545,
+     "salience": 0.35
+    },
+    {
+     "t": 2040,
+     "text": "I made a mended thing.",
+     "valence": 0.7921354727365708,
+     "salience": 0.6
+    },
+    {
+     "t": 2085,
+     "text": "I made a mended thing.",
+     "valence": 0.7563784348001711,
+     "salience": 0.6
+    },
+    {
+     "t": 2315,
+     "text": "I woke up after sleeping.",
+     "valence": 0.31764531483200986,
+     "salience": 0.25
+    },
+    {
+     "t": 2375,
+     "text": "I made a mended thing.",
+     "valence": 0.5757419563438559,
+     "salience": 0.6
+    },
+    {
+     "t": 2420,
+     "text": "I made a mended thing.",
+     "valence": 0.6733672329064653,
+     "salience": 0.6
+    },
+    {
+     "t": 2420,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.7281672329064652,
+     "salience": 0.35
+    },
+    {
+     "t": 2455,
+     "text": "I ate bread.",
+     "valence": 0.8436300632652467,
+     "salience": 0.5
+    },
+    {
+     "t": 2520,
+     "text": "I made a mended thing.",
+     "valence": 0.7715461418479425,
+     "salience": 0.6
+    },
+    {
+     "t": 2530,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.7497834972440388,
+     "salience": 0.35
+    },
+    {
+     "t": 2565,
+     "text": "I made a mended thing.",
+     "valence": 0.8195704106304762,
+     "salience": 0.6
+    },
+    {
+     "t": 2610,
+     "text": "I made a mended thing.",
+     "valence": 0.7831266025928139,
+     "salience": 0.6
+    },
+    {
+     "t": 2660,
+     "text": "Pip said to me: “Guess what I heard by the fountain!”",
+     "valence": 0.489294063656566,
+     "salience": 0.35
+    },
+    {
+     "t": 2715,
+     "text": "I made a mended thing.",
+     "valence": 0.5853080711016163,
+     "salience": 0.6
+    },
+    {
+     "t": 2790,
+     "text": "I made a mended thing.",
+     "valence": 0.5427007948211223,
+     "salience": 0.6
+    },
+    {
+     "t": 3025,
+     "text": "I woke up after sleeping.",
+     "valence": 0.25779649494337736,
+     "salience": 0.25
+    },
+    {
+     "t": 3075,
+     "text": "I ate bread and it was badly needed.",
+     "valence": 0.5912564012203267,
+     "salience": 0.7
+    },
+    {
+     "t": 3075,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.6532564012203268,
+     "salience": 0.35
+    },
+    {
+     "t": 3100,
+     "text": "Sold mended thing for 4 coins.",
+     "valence": 0.6221413339816686,
+     "salience": 0.25
+    },
+    {
+     "t": 3160,
+     "text": "I made a mended thing.",
+     "valence": 0.7166576911567116,
+     "salience": 0.6
+    },
+    {
+     "t": 3240,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.41457263700330627,
+     "salience": 0.3
+    },
+    {
+     "t": 3260,
+     "text": "I woke up after sleeping.",
+     "valence": 0.4399879421285556,
+     "salience": 0.25
+    }
+   ],
+   "diary": [],
+   "heard": [
+    {
+     "t": 1885,
+     "from": "Pip",
+     "text": "Hello hello! Seen anything shiny today?"
+    },
+    {
+     "t": 2020,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    },
+    {
+     "t": 2420,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    },
+    {
+     "t": 2530,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    },
+    {
+     "t": 2660,
+     "from": "Pip",
+     "text": "Guess what I heard by the fountain!"
+    },
+    {
+     "t": 3075,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    }
+   ],
+   "lastDecisionT": 3260,
+   "calls": {
+    "day": "",
+    "n": 0
+   },
+   "lastSource": "rules",
+   "sleptSinceReflect": true,
+   "goal": ""
+  },
+  "pip": {
+   "id": "pip",
+   "species": "magpie",
+   "emoji": "🐦‍⬛",
+   "sheet": {
+    "name": "Pip",
+    "temperament": [
+     "restless",
+     "charming",
+     "collector"
+    ],
+    "likes": [
+     "shiny",
+     "gossip",
+     "bread",
+     "small bargains",
+     "gift"
+    ],
+    "dislikes": [
+     "boredom",
+     "silence",
+     "being ignored"
+    ],
+    "voice": "Quick chatter, fond of puns and exclamations, always a bit too much.",
+    "locked": [
+     "Pip never steals; Pip only trades or asks.",
+     "Pip always says out loud when something is borrowed."
+    ],
+    "self": "I notice small bright things, and I like telling people about them."
+   },
+   "place": "bakery",
+   "drives": {
+    "food": 0.3984000000000063,
+    "energy": 0.9275000000000054,
+    "social": 0.4677000000000061,
+    "curiosity": 0.46000000000001634,
+    "comfort": 1
+   },
+   "affect": {
+    "valence": 0.31582937946613304,
+    "arousal": 0.4326855060349423
+   },
+   "mood": 0.41934081763885384,
+   "baseline": 0.25,
+   "activity": {
+    "kind": "buy_food",
+    "until": 3305,
+    "move": {
+     "do": "buy_food",
+     "why": "Bread, please."
+    }
+   },
+   "queue": [
+    {
+     "do": "eat",
+     "item": "bread",
+     "why": "Eating it while it is warm."
+    }
+   ],
+   "inventory": [
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "trinket",
+    "bread"
+   ],
+   "coins": 9,
+   "bonds": {
+    "bramble": {
+     "familiarity": 0.1,
+     "trust": 0,
+     "fondness": 0.05
+    },
+    "moss": {
+     "familiarity": 0.12000000000000001,
+     "trust": 0,
+     "fondness": 0.060000000000000005
+    }
+   },
+   "memories": [
+    {
+     "t": 425,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.35,
+     "salience": 0.3
+    },
+    {
+     "t": 485,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8978993977674328,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 510,
+     "text": "Sold shiny trinket for 3 coins.",
+     "valence": 0.764601827944885,
+     "salience": 0.25
+    },
+    {
+     "t": 570,
+     "text": "I made a shiny trinket.",
+     "valence": 0.9921602195584169,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 595,
+     "text": "Sold shiny trinket for 3 coins.",
+     "valence": 0.7962508620224948,
+     "salience": 0.25
+    },
+    {
+     "t": 655,
+     "text": "I made a shiny trinket.",
+     "valence": 0.9467383867030261,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 700,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 735,
+     "text": "I ate bread.",
+     "valence": 0.9590810278079606,
+     "salience": 0.5
+    },
+    {
+     "t": 990,
+     "text": "I woke up after sleeping.",
+     "valence": 0.4115730476334704,
+     "salience": 0.25
+    },
+    {
+     "t": 1050,
+     "text": "I made a shiny trinket.",
+     "valence": 0.9078754380638683,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1095,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1140,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1185,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1230,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1265,
+     "text": "I ate bread.",
+     "valence": 0.9589337061898842,
+     "salience": 0.5
+    },
+    {
+     "t": 1290,
+     "text": "Sold shiny trinket for 3 coins.",
+     "valence": 0.7699117627500107,
+     "salience": 0.25
+    },
+    {
+     "t": 1525,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3823499034155051,
+     "salience": 0.25
+    },
+    {
+     "t": 1585,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8729849075862794,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1585,
+     "text": "I said to Bramble: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.8729849075862794,
+     "salience": 0.25
+    },
+    {
+     "t": 1640,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1760,
+     "text": "I woke up after sleeping.",
+     "valence": 0.40910409635811984,
+     "salience": 0.25
+    },
+    {
+     "t": 1800,
+     "text": "Today: Rain drifts over the town all morning.",
+     "valence": 0.3448705287151869,
+     "salience": 0.3
+    },
+    {
+     "t": 1820,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8367551674419813,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 1855,
+     "text": "I ate bread.",
+     "valence": 0.9123284809163118,
+     "salience": 0.5
+    },
+    {
+     "t": 1875,
+     "text": "I said to Bramble: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.7476624240910563,
+     "salience": 0.25
+    },
+    {
+     "t": 1885,
+     "text": "I said to Moss: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.6829790654646484,
+     "salience": 0.25
+    },
+    {
+     "t": 1920,
+     "text": "Sold shiny trinket for 3 coins.",
+     "valence": 0.5793429414110136,
+     "salience": 0.25
+    },
+    {
+     "t": 1965,
+     "text": "I said to Bramble: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.4179033284389453,
+     "salience": 0.25
+    },
+    {
+     "t": 2020,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8367491847845454,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2020,
+     "text": "I said to Moss: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.8367491847845454,
+     "salience": 0.25
+    },
+    {
+     "t": 2075,
+     "text": "I made a shiny trinket.",
+     "valence": 0.9733668253956698,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2120,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2350,
+     "text": "I woke up after sleeping.",
+     "valence": 0.2772104342205507,
+     "salience": 0.25
+    },
+    {
+     "t": 2400,
+     "text": "I ate bread.",
+     "valence": 0.6034981084136821,
+     "salience": 0.5
+    },
+    {
+     "t": 2420,
+     "text": "I said to Moss: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.5315160247716845,
+     "salience": 0.25
+    },
+    {
+     "t": 2430,
+     "text": "I said to Bramble: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.5027988865952082,
+     "salience": 0.25
+    },
+    {
+     "t": 2485,
+     "text": "I made a shiny trinket.",
+     "valence": 0.9222275540489965,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2530,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2530,
+     "text": "I said to Moss: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 1,
+     "salience": 0.25
+    },
+    {
+     "t": 2585,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2630,
+     "text": "I made a shiny trinket.",
+     "valence": 1,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2660,
+     "text": "I said to Moss: “Guess what I heard by the fountain!”",
+     "valence": 0.6516885053493715,
+     "salience": 0.25
+    },
+    {
+     "t": 2715,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8556294189981942,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 2750,
+     "text": "I ate bread.",
+     "valence": 0.8629231763202997,
+     "salience": 0.5
+    },
+    {
+     "t": 3010,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3586235999794147,
+     "salience": 0.25
+    },
+    {
+     "t": 3025,
+     "text": "I said to Bramble: “Guess what I heard by the fountain!”",
+     "valence": 0.3525246225233602,
+     "salience": 0.25
+    },
+    {
+     "t": 3060,
+     "text": "Sold shiny trinket for 3 coins.",
+     "valence": 0.394296172403551,
+     "salience": 0.25
+    },
+    {
+     "t": 3075,
+     "text": "I said to Moss: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.36998647782666283,
+     "salience": 0.25
+    },
+    {
+     "t": 3150,
+     "text": "I made a shiny trinket.",
+     "valence": 0.8023688768734625,
+     "salience": 0.8999999999999999
+    },
+    {
+     "t": 3240,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.35312823631243057,
+     "salience": 0.3
+    },
+    {
+     "t": 3265,
+     "text": "I woke up after sleeping.",
+     "valence": 0.36746343149471933,
+     "salience": 0.25
+    }
+   ],
+   "diary": [],
+   "heard": [],
+   "lastDecisionT": 3265,
+   "calls": {
+    "day": "",
+    "n": 0
+   },
+   "lastSource": "rules",
+   "sleptSinceReflect": true,
+   "goal": ""
+  },
+  "bramble": {
+   "id": "bramble",
+   "species": "toad",
+   "emoji": "🐸",
+   "sheet": {
+    "name": "Bramble",
+    "temperament": [
+     "slow",
+     "deep-thinking",
+     "secretly sentimental"
+    ],
+    "likes": [
+     "herb",
+     "quiet",
+     "mud",
+     "questions",
+     "mending"
+    ],
+    "dislikes": [
+     "hurry",
+     "crowds",
+     "dry places",
+     "loud"
+    ],
+    "voice": "Unhurried and formal. Pauses written as '...'. Dry, gentle wit.",
+    "locked": [
+     "Bramble keeps every promise.",
+     "Bramble will not harm another creature."
+    ],
+    "self": "I think best when nothing is asking me for an answer."
+   },
+   "place": "workshop",
+   "drives": {
+    "food": 0.712900000000011,
+    "energy": 0.9464999999999937,
+    "social": 0.6500000000000088,
+    "curiosity": 0.976,
+    "comfort": 0.994
+   },
+   "affect": {
+    "valence": 0.3251436744108083,
+    "arousal": 0.3500232563508921
+   },
+   "mood": 0.2833799642564357,
+   "baseline": 0.1,
+   "activity": {
+    "kind": "craft",
+    "until": 3335,
+    "move": {
+     "do": "craft",
+     "why": "Keeping my hands busy."
+    }
+   },
+   "queue": [],
+   "inventory": [
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion",
+    "potion"
+   ],
+   "coins": 13,
+   "bonds": {
+    "pip": {
+     "familiarity": 0.15,
+     "trust": 0,
+     "fondness": 0.1
+    }
+   },
+   "memories": [
+    {
+     "t": 425,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.1,
+     "salience": 0.3
+    },
+    {
+     "t": 505,
+     "text": "I made a herbal potion.",
+     "valence": 0.4899786289357534,
+     "salience": 0.6
+    },
+    {
+     "t": 530,
+     "text": "Sold herbal potion for 5 coins.",
+     "valence": 0.46869798398860696,
+     "salience": 0.25
+    },
+    {
+     "t": 590,
+     "text": "I made a herbal potion.",
+     "valence": 0.5634069373171541,
+     "salience": 0.6
+    },
+    {
+     "t": 635,
+     "text": "I made a herbal potion.",
+     "valence": 0.618286535997738,
+     "salience": 0.6
+    },
+    {
+     "t": 680,
+     "text": "I made a herbal potion.",
+     "valence": 0.6240366373754274,
+     "salience": 0.6
+    },
+    {
+     "t": 725,
+     "text": "I made a herbal potion.",
+     "valence": 0.6065212390091294,
+     "salience": 0.6
+    },
+    {
+     "t": 830,
+     "text": "I made a herbal potion.",
+     "valence": 0.41092044238839226,
+     "salience": 0.6
+    },
+    {
+     "t": 865,
+     "text": "I ate bread.",
+     "valence": 0.43147610925588414,
+     "salience": 0.2
+    },
+    {
+     "t": 890,
+     "text": "Sold herbal potion for 5 coins.",
+     "valence": 0.4078779373242966,
+     "salience": 0.25
+    },
+    {
+     "t": 1120,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3096479522091893,
+     "salience": 0.25
+    },
+    {
+     "t": 1180,
+     "text": "I made a herbal potion.",
+     "valence": 0.577571159866217,
+     "salience": 0.6
+    },
+    {
+     "t": 1225,
+     "text": "I made a herbal potion.",
+     "valence": 0.6846174082973364,
+     "salience": 0.6
+    },
+    {
+     "t": 1270,
+     "text": "I made a herbal potion.",
+     "valence": 0.71094651264184,
+     "salience": 0.6
+    },
+    {
+     "t": 1315,
+     "text": "I made a herbal potion.",
+     "valence": 0.6986689540542609,
+     "salience": 0.6
+    },
+    {
+     "t": 1360,
+     "text": "I made a herbal potion.",
+     "valence": 0.665894676184313,
+     "salience": 0.6
+    },
+    {
+     "t": 1555,
+     "text": "I woke up after sleeping.",
+     "valence": 0.2219053246274441,
+     "salience": 0.25
+    },
+    {
+     "t": 1585,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.2547523459729499,
+     "salience": 0.35
+    },
+    {
+     "t": 1615,
+     "text": "I made a herbal potion.",
+     "valence": 0.5105943431567176,
+     "salience": 0.6
+    },
+    {
+     "t": 1650,
+     "text": "I ate bread.",
+     "valence": 0.5516387678005825,
+     "salience": 0.2
+    },
+    {
+     "t": 1715,
+     "text": "I made a herbal potion.",
+     "valence": 0.6418019323719681,
+     "salience": 0.6
+    },
+    {
+     "t": 1800,
+     "text": "Today: Rain drifts over the town all morning.",
+     "valence": 0.34562533164432035,
+     "salience": 0.3
+    },
+    {
+     "t": 1835,
+     "text": "I woke up after sleeping.",
+     "valence": 0.36526609094138596,
+     "salience": 0.25
+    },
+    {
+     "t": 1875,
+     "text": "Pip said to me: “Don't tell anyone, but I'm a bit bored!”",
+     "valence": 0.3757715720265335,
+     "salience": 0.35
+    },
+    {
+     "t": 1895,
+     "text": "I made a herbal potion.",
+     "valence": 0.6366607051440945,
+     "salience": 0.6
+    },
+    {
+     "t": 1940,
+     "text": "I made a herbal potion.",
+     "valence": 0.7147768554146652,
+     "salience": 0.6
+    },
+    {
+     "t": 1965,
+     "text": "Pip said to me: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.592882662188796,
+     "salience": 0.35
+    },
+    {
+     "t": 1985,
+     "text": "I made a herbal potion.",
+     "valence": 0.7699091643040077,
+     "salience": 0.6
+    },
+    {
+     "t": 2030,
+     "text": "I made a herbal potion.",
+     "valence": 0.7357054742729499,
+     "salience": 0.6
+    },
+    {
+     "t": 2075,
+     "text": "I made a herbal potion.",
+     "valence": 0.6953128321111941,
+     "salience": 0.6
+    },
+    {
+     "t": 2120,
+     "text": "I made a herbal potion.",
+     "valence": 0.6519967359663816,
+     "salience": 0.6
+    },
+    {
+     "t": 2225,
+     "text": "I made a herbal potion.",
+     "valence": 0.4277898110782312,
+     "salience": 0.6
+    },
+    {
+     "t": 2260,
+     "text": "I ate bread.",
+     "valence": 0.44457285032368404,
+     "salience": 0.2
+    },
+    {
+     "t": 2385,
+     "text": "I made a herbal potion.",
+     "valence": 0.4647547728394561,
+     "salience": 0.6
+    },
+    {
+     "t": 2430,
+     "text": "Pip said to me: “Hello hello! Seen anything shiny today?”",
+     "valence": 0.33184545869836635,
+     "salience": 0.35
+    },
+    {
+     "t": 2460,
+     "text": "I made a herbal potion.",
+     "valence": 0.5348193276973594,
+     "salience": 0.6
+    },
+    {
+     "t": 2685,
+     "text": "I woke up after sleeping.",
+     "valence": 0.2666977647812315,
+     "salience": 0.25
+    },
+    {
+     "t": 2745,
+     "text": "I made a herbal potion.",
+     "valence": 0.5310601451005916,
+     "salience": 0.6
+    },
+    {
+     "t": 2790,
+     "text": "I made a herbal potion.",
+     "valence": 0.6339342196544226,
+     "salience": 0.6
+    },
+    {
+     "t": 2835,
+     "text": "I made a herbal potion.",
+     "valence": 0.6553031978627997,
+     "salience": 0.6
+    },
+    {
+     "t": 2965,
+     "text": "I woke up after sleeping.",
+     "valence": 0.25298308170332173,
+     "salience": 0.25
+    },
+    {
+     "t": 3025,
+     "text": "I made a herbal potion.",
+     "valence": 0.47642288393876187,
+     "salience": 0.6
+    },
+    {
+     "t": 3025,
+     "text": "Pip said to me: “Guess what I heard by the fountain!”",
+     "valence": 0.5360228839387619,
+     "salience": 0.35
+    },
+    {
+     "t": 3060,
+     "text": "I ate bread.",
+     "valence": 0.5584605970124097,
+     "salience": 0.2
+    },
+    {
+     "t": 3085,
+     "text": "Sold herbal potion for 5 coins.",
+     "valence": 0.534952320406203,
+     "salience": 0.25
+    },
+    {
+     "t": 3145,
+     "text": "I made a herbal potion.",
+     "valence": 0.6242475941613653,
+     "salience": 0.6
+    },
+    {
+     "t": 3240,
+     "text": "Today: A small festival has filled the fountain square.",
+     "valence": 0.30947638009208833,
+     "salience": 0.3
+    },
+    {
+     "t": 3275,
+     "text": "I woke up after sleeping.",
+     "valence": 0.3461064814928646,
+     "salience": 0.25
+    }
+   ],
+   "diary": [],
+   "heard": [
+    {
+     "t": 1585,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    },
+    {
+     "t": 1875,
+     "from": "Pip",
+     "text": "Don't tell anyone, but I'm a bit bored!"
+    },
+    {
+     "t": 1965,
+     "from": "Pip",
+     "text": "Hello hello! Seen anything shiny today?"
+    },
+    {
+     "t": 2430,
+     "from": "Pip",
+     "text": "Hello hello! Seen anything shiny today?"
+    },
+    {
+     "t": 3025,
+     "from": "Pip",
+     "text": "Guess what I heard by the fountain!"
+    }
+   ],
+   "lastDecisionT": 3275,
+   "calls": {
+    "day": "",
+    "n": 0
+   },
+   "lastSource": "rules",
+   "sleptSinceReflect": true,
+   "goal": ""
+  }
+ },
+ "bakeryStock": 5,
+ "market": {
+  "mended-thing": 1,
+  "trinket": 1,
+  "potion": 1
+ },
+ "feed": [
+  {
+   "id": 95,
+   "t": 1180,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 96,
+   "t": 1180,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 97,
+   "t": 1185,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 98,
+   "t": 1185,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 99,
+   "t": 1190,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 100,
+   "t": 1190,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 101,
+   "t": 1225,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 102,
+   "t": 1225,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 103,
+   "t": 1230,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 104,
+   "t": 1230,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 105,
+   "t": 1235,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 106,
+   "t": 1235,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 107,
+   "t": 1250,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 108,
+   "t": 1255,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 109,
+   "t": 1265,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 110,
+   "t": 1265,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 111,
+   "t": 1270,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 112,
+   "t": 1270,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 113,
+   "t": 1280,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip offers shiny trinket at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 114,
+   "t": 1285,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 115,
+   "t": 1290,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 116,
+   "t": 1290,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip sells shiny trinket for 3 coins."
+  },
+  {
+   "id": 117,
+   "t": 1290,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 118,
+   "t": 1300,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 119,
+   "t": 1310,
+   "ts": 1795033848752,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 120,
+   "t": 1315,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 121,
+   "t": 1315,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 122,
+   "t": 1330,
+   "ts": 1795033848752,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 123,
+   "t": 1360,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 124,
+   "t": 1360,
+   "ts": 1795033848752,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 125,
+   "t": 1365,
+   "ts": 1795033848753,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 126,
+   "t": 1375,
+   "ts": 1795033848753,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 127,
+   "t": 1525,
+   "ts": 1795033848753,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip wakes up."
+  },
+  {
+   "id": 128,
+   "t": 1525,
+   "ts": 1795033848753,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 129,
+   "t": 1540,
+   "ts": 1795033848753,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 130,
+   "t": 1555,
+   "ts": 1795033848753,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss wakes up."
+  },
+  {
+   "id": 131,
+   "t": 1555,
+   "ts": 1795033848753,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble wakes up."
+  },
+  {
+   "id": 132,
+   "t": 1555,
+   "ts": 1795033848753,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 133,
+   "t": 1555,
+   "ts": 1795033848753,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 134,
+   "t": 1570,
+   "ts": 1795033848753,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 135,
+   "t": 1570,
+   "ts": 1795033848753,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 136,
+   "t": 1585,
+   "ts": 1795033848753,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 137,
+   "t": 1585,
+   "ts": 1795033848753,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Bramble: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Bramble is here.",
+   "source": "rules"
+  },
+  {
+   "id": 138,
+   "t": 1595,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 139,
+   "t": 1615,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 140,
+   "t": 1615,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 141,
+   "t": 1615,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 142,
+   "t": 1615,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 143,
+   "t": 1635,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 144,
+   "t": 1640,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 145,
+   "t": 1640,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 146,
+   "t": 1640,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 147,
+   "t": 1650,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 148,
+   "t": 1655,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 149,
+   "t": 1660,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 150,
+   "t": 1660,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 151,
+   "t": 1670,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 152,
+   "t": 1675,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 153,
+   "t": 1715,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 154,
+   "t": 1715,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 155,
+   "t": 1730,
+   "ts": 1795033848754,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 156,
+   "t": 1760,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip wakes up."
+  },
+  {
+   "id": 157,
+   "t": 1760,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 158,
+   "t": 1770,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss wakes up."
+  },
+  {
+   "id": 159,
+   "t": 1770,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 160,
+   "t": 1775,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 161,
+   "t": 1785,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 162,
+   "t": 1800,
+   "ts": 1795033848754,
+   "creature": "world",
+   "kind": "system",
+   "text": "Rain drifts over the town all morning."
+  },
+  {
+   "id": 163,
+   "t": 1820,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 164,
+   "t": 1820,
+   "ts": 1795033848754,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 165,
+   "t": 1830,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 166,
+   "t": 1830,
+   "ts": 1795033848754,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 167,
+   "t": 1835,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble wakes up."
+  },
+  {
+   "id": 168,
+   "t": 1835,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 169,
+   "t": 1840,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 170,
+   "t": 1845,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 171,
+   "t": 1850,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 172,
+   "t": 1855,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 173,
+   "t": 1875,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 174,
+   "t": 1875,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 175,
+   "t": 1875,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Bramble: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Bramble is here.",
+   "source": "rules"
+  },
+  {
+   "id": 176,
+   "t": 1885,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Hello hello! Seen anything shiny today?”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 177,
+   "t": 1895,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 178,
+   "t": 1895,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 179,
+   "t": 1895,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 180,
+   "t": 1895,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 181,
+   "t": 1900,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 182,
+   "t": 1910,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip offers shiny trinket at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 183,
+   "t": 1910,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 184,
+   "t": 1920,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip sells shiny trinket for 3 coins."
+  },
+  {
+   "id": 185,
+   "t": 1920,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 186,
+   "t": 1925,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss offers mended thing at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 187,
+   "t": 1935,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss sells mended thing for 4 coins."
+  },
+  {
+   "id": 188,
+   "t": 1935,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 189,
+   "t": 1935,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the fountain.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 190,
+   "t": 1940,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 191,
+   "t": 1940,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 192,
+   "t": 1950,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 193,
+   "t": 1950,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 194,
+   "t": 1965,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Bramble: “Hello hello! Seen anything shiny today?”",
+   "why": "I am lonely and Bramble is here.",
+   "source": "rules"
+  },
+  {
+   "id": 195,
+   "t": 1975,
+   "ts": 1795033848755,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 196,
+   "t": 1985,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 197,
+   "t": 1985,
+   "ts": 1795033848755,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 198,
+   "t": 1995,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 199,
+   "t": 1995,
+   "ts": 1795033848755,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 200,
+   "t": 2020,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 201,
+   "t": 2020,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 202,
+   "t": 2030,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 203,
+   "t": 2030,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 204,
+   "t": 2030,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 205,
+   "t": 2040,
+   "ts": 1795033848756,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 206,
+   "t": 2040,
+   "ts": 1795033848756,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 207,
+   "t": 2075,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 208,
+   "t": 2075,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 209,
+   "t": 2075,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 210,
+   "t": 2075,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 211,
+   "t": 2085,
+   "ts": 1795033848756,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 212,
+   "t": 2085,
+   "ts": 1795033848756,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 213,
+   "t": 2100,
+   "ts": 1795033848756,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 214,
+   "t": 2120,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 215,
+   "t": 2120,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 216,
+   "t": 2120,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 217,
+   "t": 2120,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 218,
+   "t": 2135,
+   "ts": 1795033848756,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 219,
+   "t": 2150,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 220,
+   "t": 2180,
+   "ts": 1795033848756,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 221,
+   "t": 2225,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 222,
+   "t": 2225,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 223,
+   "t": 2245,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 224,
+   "t": 2250,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 225,
+   "t": 2260,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 226,
+   "t": 2290,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 227,
+   "t": 2315,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss wakes up."
+  },
+  {
+   "id": 228,
+   "t": 2315,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 229,
+   "t": 2320,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 230,
+   "t": 2330,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 231,
+   "t": 2340,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 232,
+   "t": 2350,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip wakes up."
+  },
+  {
+   "id": 233,
+   "t": 2350,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 234,
+   "t": 2375,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 235,
+   "t": 2375,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 236,
+   "t": 2385,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 237,
+   "t": 2385,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 238,
+   "t": 2385,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 239,
+   "t": 2390,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 240,
+   "t": 2400,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 241,
+   "t": 2415,
+   "ts": 1795033848757,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 242,
+   "t": 2420,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 243,
+   "t": 2420,
+   "ts": 1795033848757,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 244,
+   "t": 2420,
+   "ts": 1795033848757,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 245,
+   "t": 2430,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Bramble: “Hello hello! Seen anything shiny today?”",
+   "why": "I am lonely and Bramble is here.",
+   "source": "rules"
+  },
+  {
+   "id": 246,
+   "t": 2440,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 247,
+   "t": 2440,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 248,
+   "t": 2445,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 249,
+   "t": 2455,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 250,
+   "t": 2460,
+   "ts": 1795033848758,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 251,
+   "t": 2460,
+   "ts": 1795033848758,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 252,
+   "t": 2475,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 253,
+   "t": 2475,
+   "ts": 1795033848758,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 254,
+   "t": 2485,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 255,
+   "t": 2485,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 256,
+   "t": 2520,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 257,
+   "t": 2520,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 258,
+   "t": 2530,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 259,
+   "t": 2530,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 260,
+   "t": 2540,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 261,
+   "t": 2565,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 262,
+   "t": 2565,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 263,
+   "t": 2585,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 264,
+   "t": 2585,
+   "ts": 1795033848758,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 265,
+   "t": 2610,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 266,
+   "t": 2610,
+   "ts": 1795033848758,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 267,
+   "t": 2630,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 268,
+   "t": 2630,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 269,
+   "t": 2640,
+   "ts": 1795033848759,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 270,
+   "t": 2660,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Guess what I heard by the fountain!”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 271,
+   "t": 2670,
+   "ts": 1795033848759,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 272,
+   "t": 2670,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 273,
+   "t": 2685,
+   "ts": 1795033848759,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble wakes up."
+  },
+  {
+   "id": 274,
+   "t": 2685,
+   "ts": 1795033848759,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 275,
+   "t": 2700,
+   "ts": 1795033848759,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 276,
+   "t": 2715,
+   "ts": 1795033848759,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 277,
+   "t": 2715,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 278,
+   "t": 2715,
+   "ts": 1795033848759,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss rests a while.",
+   "why": "Taking it slowly.",
+   "source": "rules"
+  },
+  {
+   "id": 279,
+   "t": 2715,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 280,
+   "t": 2735,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 281,
+   "t": 2740,
+   "ts": 1795033848759,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 282,
+   "t": 2745,
+   "ts": 1795033848759,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 283,
+   "t": 2745,
+   "ts": 1795033848760,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 284,
+   "t": 2745,
+   "ts": 1795033848760,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 285,
+   "t": 2750,
+   "ts": 1795033848760,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 286,
+   "t": 2785,
+   "ts": 1795033848760,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 287,
+   "t": 2790,
+   "ts": 1795033848760,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 288,
+   "t": 2790,
+   "ts": 1795033848760,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 289,
+   "t": 2790,
+   "ts": 1795033848760,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 290,
+   "t": 2790,
+   "ts": 1795033848760,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 291,
+   "t": 2805,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 292,
+   "t": 2835,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 293,
+   "t": 2835,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 294,
+   "t": 2850,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 295,
+   "t": 2965,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble wakes up."
+  },
+  {
+   "id": 296,
+   "t": 2965,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 297,
+   "t": 2980,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 298,
+   "t": 3010,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip wakes up."
+  },
+  {
+   "id": 299,
+   "t": 3010,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 300,
+   "t": 3025,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss wakes up."
+  },
+  {
+   "id": 301,
+   "t": 3025,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 302,
+   "t": 3025,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 303,
+   "t": 3025,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Bramble: “Guess what I heard by the fountain!”",
+   "why": "I am lonely and Bramble is here.",
+   "source": "rules"
+  },
+  {
+   "id": 304,
+   "t": 3025,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 305,
+   "t": 3035,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 306,
+   "t": 3045,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 307,
+   "t": 3050,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip offers shiny trinket at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 308,
+   "t": 3050,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 309,
+   "t": 3060,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  },
+  {
+   "id": 310,
+   "t": 3060,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip sells shiny trinket for 3 coins."
+  },
+  {
+   "id": 311,
+   "t": 3060,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I want some company.",
+   "source": "rules"
+  },
+  {
+   "id": 312,
+   "t": 3060,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 313,
+   "t": 3065,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss eats bread.",
+   "why": "Eating it while it is warm.",
+   "source": "rules"
+  },
+  {
+   "id": 314,
+   "t": 3075,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble offers herbal potion at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 315,
+   "t": 3075,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the fountain.",
+   "why": "I have something to sell.",
+   "source": "rules"
+  },
+  {
+   "id": 316,
+   "t": 3075,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "say",
+   "text": "Pip to Moss: “Don't tell anyone, but I'm a bit bored!”",
+   "why": "I am lonely and Moss is here.",
+   "source": "rules"
+  },
+  {
+   "id": 317,
+   "t": 3085,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble sells herbal potion for 5 coins."
+  },
+  {
+   "id": 318,
+   "t": 3085,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 319,
+   "t": 3085,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 320,
+   "t": 3090,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss offers mended thing at the stall.",
+   "why": "Turning it into coins.",
+   "source": "rules"
+  },
+  {
+   "id": 321,
+   "t": 3100,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss sells mended thing for 4 coins."
+  },
+  {
+   "id": 322,
+   "t": 3100,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 323,
+   "t": 3100,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 324,
+   "t": 3105,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 325,
+   "t": 3115,
+   "ts": 1795033848761,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 326,
+   "t": 3145,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble finishes a herbal potion."
+  },
+  {
+   "id": 327,
+   "t": 3145,
+   "ts": 1795033848761,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 328,
+   "t": 3150,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip finishes a shiny trinket."
+  },
+  {
+   "id": 329,
+   "t": 3150,
+   "ts": 1795033848761,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 330,
+   "t": 3160,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss finishes a mended thing."
+  },
+  {
+   "id": 331,
+   "t": 3160,
+   "ts": 1795033848762,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 332,
+   "t": 3160,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the nests.",
+   "why": "I am worn out and it is time to sleep.",
+   "source": "rules"
+  },
+  {
+   "id": 333,
+   "t": 3165,
+   "ts": 1795033848762,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 334,
+   "t": 3175,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss curls up to sleep.",
+   "why": "I need rest.",
+   "source": "rules"
+  },
+  {
+   "id": 335,
+   "t": 3240,
+   "ts": 1795033848762,
+   "creature": "world",
+   "kind": "system",
+   "text": "A small festival has filled the fountain square."
+  },
+  {
+   "id": 336,
+   "t": 3260,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss wakes up."
+  },
+  {
+   "id": 337,
+   "t": 3260,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 338,
+   "t": 3265,
+   "ts": 1795033848762,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip wakes up."
+  },
+  {
+   "id": 339,
+   "t": 3265,
+   "ts": 1795033848762,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip walks to the bakery.",
+   "why": "I am hungry; the bakery has bread.",
+   "source": "rules"
+  },
+  {
+   "id": 340,
+   "t": 3275,
+   "ts": 1795033848762,
+   "creature": "moss",
+   "kind": "move",
+   "text": "Moss starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 341,
+   "t": 3275,
+   "ts": 1795033848762,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble wakes up."
+  },
+  {
+   "id": 342,
+   "t": 3275,
+   "ts": 1795033848762,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble walks to the workshop.",
+   "why": "I feel like making something.",
+   "source": "rules"
+  },
+  {
+   "id": 343,
+   "t": 3290,
+   "ts": 1795033848762,
+   "creature": "bramble",
+   "kind": "move",
+   "text": "Bramble starts crafting.",
+   "why": "Keeping my hands busy.",
+   "source": "rules"
+  },
+  {
+   "id": 344,
+   "t": 3300,
+   "ts": 1795033848762,
+   "creature": "pip",
+   "kind": "move",
+   "text": "Pip buys bread (2 coins).",
+   "why": "Bread, please.",
+   "source": "rules"
+  }
+ ],
+ "feedSeq": 344,
+ "stats": {
+  "modelCalls": 0,
+  "fallbacks": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "errors": 0,
+  "consecutiveErrors": 0
+ },
+ "board": [
+  {
+   "id": 1,
+   "t": 3300,
+   "ts": 1,
+   "by": "Sam",
+   "byKind": "visitor",
+   "to": "Pip",
+   "text": "hello"
+  }
+ ],
+ "boardSeq": 1,
+ "event": {
+  "day": 3,
+  "name": "festival",
+  "text": "A small festival has filled the fountain square."
+ }
+}

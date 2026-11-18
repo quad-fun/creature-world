@@ -6,8 +6,8 @@ import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
 import { addInfluence, appraise, clamp, impulse, moodWords, relieve } from "./affect";
 import { PLACES } from "./content";
-import { checkText } from "./filter";
-import { MODEL_ID, persona } from "./mind";
+import { checkText, stripInvisible } from "./filter";
+import { modelRef, persona } from "./mind";
 import { noteExposure, novelty, payoffScale, familiarity } from "./novelty";
 import { clockOf, logFeed, remember, touchBond } from "./sim";
 import type { Creature, Move, MoveKind, PlaceId, Shape, Work, WorkKind, World } from "./types";
@@ -34,7 +34,7 @@ export const slotPrice = (slots: number) => 30 + 20 * Math.max(0, slots - START_
 
 /** One line of checked text, or null. */
 export function cleanLine(s: unknown, max: number): string | null {
-  const t = String(s ?? "").replace(/[\u0000-\u001f\u007f<>]+/g, " ").replace(/\s{2,}/g, " ").trim().slice(0, max);
+  const t = (typeof s === "string" ? stripInvisible(s) : "").replace(/[\u0000-\u001f\u007f<>]+/g, " ").replace(/\s{2,}/g, " ").trim().slice(0, max);
   if (!t) return null;
   const v = checkText(t);
   return v.ok ? v.text : null;
@@ -42,7 +42,7 @@ export function cleanLine(s: unknown, max: number): string | null {
 
 /** Multi-line checked text: every non-empty line must pass, otherwise null. Paragraph breaks are kept. */
 export function cleanBody(s: unknown, max = BODY_MAX): string | null {
-  const raw = String(s ?? "").replace(/\r/g, "").replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]/g, " ").slice(0, max);
+  const raw = (typeof s === "string" ? stripInvisible(s) : "").replace(/\r/g, "").replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]/g, " ").slice(0, max);
   const lines = raw.split("\n").map((l) => l.replace(/[ \t]{2,}/g, " ").trim());
   const out: string[] = [];
   for (const l of lines) {
@@ -244,7 +244,7 @@ export async function writeWorkWithModel(
   w: World,
   c: Creature,
   req: { kind: WorkKind; title?: string; topic?: string },
-  model: LanguageModel = MODEL_ID,
+  model: LanguageModel = modelRef.current,
 ): Promise<{ piece: Piece | null; usage: { in: number; out: number } }> {
   const strip = (t: string) => t.replace(/[<>]/g, "");
   const diary = c.diary.slice(-3).map((d) => `- ${strip(d.text)}`).join("\n");

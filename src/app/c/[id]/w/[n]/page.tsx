@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadWorld } from "@/lib/engine";
+import { own } from "@/lib/own";
 import { renderSvg } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function WorkPage({ params }: { params: Promise<{ id: string; n: string }> }) {
   const { id, n } = await params;
   const { world } = await loadWorld();
-  const c = world.creatures[id];
+  const c = own(world.creatures, id);
   const k = c?.shelf.find((x) => String(x.n) === n);
   if (!c || !k) notFound();
   const by = world.creatures[k.by]?.sheet.name ?? "a townsperson";

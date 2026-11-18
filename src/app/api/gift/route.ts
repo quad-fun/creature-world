@@ -5,8 +5,10 @@ import { checkText, visitorMessage } from "@/lib/filter";
 import { sanitizeName, sanitizeText } from "@/lib/inbox";
 import { DESC_MAX, NAME_MAX, normName } from "@/lib/items";
 import { getStore } from "@/lib/store";
+import { own } from "@/lib/own";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // after() runs a tick
 
 // Visitors can give any small thing as free text: a name and a short description. 2 a day each, 10 a day town-wide.
 // Both fields pass the English-only filter here and again when applied. The description is only ever read by the
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
   }
 
   const { world } = await loadWorld();
-  if (!world.creatures[to]) return NextResponse.json({ error: "no such creature" }, { status: 404 });
+  if (!own(world.creatures, to)) return NextResponse.json({ error: "no such creature" }, { status: 404 });
 
   const ok = (await store.hit(`gift:${ip}`, 2, 86400)) && (await store.hit("gift:all", 10, 86400));
   if (!ok) return NextResponse.json({ error: "slow down a little; try again later" }, { status: 429 });

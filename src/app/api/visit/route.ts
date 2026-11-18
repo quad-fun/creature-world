@@ -4,8 +4,10 @@ import { clientIp, readJson, tickSoon } from "@/lib/http";
 import { checkText, visitorMessage } from "@/lib/filter";
 import { sanitizeName, sanitizeText } from "@/lib/inbox";
 import { getStore } from "@/lib/store";
+import { own } from "@/lib/own";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // after() runs a tick
 
 // Visitors can leave a note (at most 6 an hour each, 80 a day town-wide) or a loaf of bread
 // (1 a day each, 12 a day town-wide). Everything is sanitised and reaches creatures only as speech.
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
   }
 
   const { world } = await loadWorld();
-  if (!world.creatures[to]) return NextResponse.json({ error: "no such creature" }, { status: 404 });
+  if (!own(world.creatures, to)) return NextResponse.json({ error: "no such creature" }, { status: 404 });
 
   const store = getStore();
   const ip = clientIp(req);

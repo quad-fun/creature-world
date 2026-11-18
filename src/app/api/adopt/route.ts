@@ -5,10 +5,12 @@ import { clientIp, readJson, tickSoon } from "@/lib/http";
 import { checkAll, checkText, visitorMessage } from "@/lib/filter";
 import { sanitizeList, sanitizeName, sanitizeText } from "@/lib/inbox";
 import { getStore } from "@/lib/store";
+import { COOKIE, readCookie, verify } from "@/lib/credits/cookie";
 import { redeemTicket, ticketUsable } from "@/lib/credits/sinks";
 import type { Creature } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // One adoption per visitor per day, three town-wide per day, and the town holds at most MAX_CREATURES.
 export async function POST(req: Request) {
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
   const name = sanitizeName(body.name);
   const species = String(body.species ?? "") as Creature["species"];
   if (name.length < 2) return NextResponse.json({ error: "give your creature a name" }, { status: 400 });
-  if (!(species in SPECIES_EMOJI)) return NextResponse.json({ error: "species must be otter, magpie or toad" }, { status: 400 });
+  if (!Object.hasOwn(SPECIES_EMOJI, species)) return NextResponse.json({ error: "species must be otter, magpie or toad" }, { status: 400 });
   const temperament = sanitizeList(body.temperament, 3, 24);
   const likes = sanitizeList(body.likes, 5, 24);
   const dislikes = sanitizeList(body.dislikes, 3, 24);
@@ -34,14 +36,21 @@ export async function POST(req: Request) {
 
   const store = getStore();
   // Optional paid path: with REQUIRE_TICKET=1 a launch_creature ticket (from /api/credits/spend) is needed. Off by default.
-  const ticket = String(body.ticket ?? "");
+  // The ticket is tied to the account that bought it: the signed cookie must belong to that account.
+  const ticket = typeof body.ticket === "string" ? body.ticket : "";
   const needTicket = process.env.REQUIRE_TICKET === "1";
-  if (needTicket && !(await ticketUsable(store.kv, ticket, "launch_creature")))
+  let account: string | null = null;
+  try {
+    account = verify(readCookie(req.headers.get("cookie"), COOKIE));
+  } catch {
+    account = null; // no CREDITS_SECRET configured: no account can prove anything
+  }
+  if (needTicket && !(await ticketUsable(store.kv, ticket, "launch_creature", account)))
     return NextResponse.json({ error: "a launch ticket is required" }, { status: 402 });
   const ok = (await store.hit(`adopt:${clientIp(req)}`, 1, 86400)) && (await store.hit("adopt:all", 3, 86400));
   if (!ok) return NextResponse.json({ error: "adoption limit reached; try tomorrow" }, { status: 429 });
 
-  if (needTicket && !(await redeemTicket(store.kv, ticket, "launch_creature")))
+  if (needTicket && !(await redeemTicket(store.kv, ticket, "launch_creature", account)))
     return NextResponse.json({ error: "that ticket was already used" }, { status: 402 });
   await store.pushInbox({ type: "adopt", name, species, temperament, likes, dislikes, voice });
   after(tickSoon);

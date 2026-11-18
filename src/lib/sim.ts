@@ -152,11 +152,11 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   if (typeof r.do !== "string" || !MOVE_KINDS.includes(r.do as MoveKind)) return null;
-  const m: Move = { do: r.do as MoveKind, why: clean(r.why, 200) };
+  const m: Move = { do: r.do as MoveKind, why: cleanLine(r.why, 200) ?? "" }; // shown publicly beside the move: held to the same filter
   if (typeof r.place === "string") m.place = matchPlace(r.place);
   if (typeof r.target === "string") m.target = matchCreature(w, r.target);
   if (typeof r.item === "string") m.item = matchItem(w, r.item);
-  if (typeof r.text === "string" && r.text.trim()) m.text = clean(r.text, 240);
+  if (typeof r.text === "string" && r.text.trim()) m.text = cleanLine(r.text, 240) ?? undefined; // speech, posts and taglines: a failing text is dropped (the move then has nothing to say)
   if (typeof r.kind === "string" && WORK_KINDS.includes(r.kind as never)) m.kind = r.kind as Move["kind"];
   if (typeof r.title === "string") m.title = cleanLine(r.title, 60) ?? undefined; // checked; a failing title is dropped
   if (typeof r.topic === "string") m.topic = cleanLine(r.topic, 40) ?? undefined;

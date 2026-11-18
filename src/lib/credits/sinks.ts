@@ -43,10 +43,17 @@ export async function spend(kv: Kv, account: string, sink: SinkName, params: unk
   const cents = SINKS[sink].cents;
   const r: ApplyResult = await apply(kv, account, -cents, "spend", sink, idem);
   const id = "t_" + (idem ? r.entry.id.replace(/-/g, "").slice(0, 24) : randomBytes(12).toString("hex"));
+  if (r.replayed && r.entry.ref !== sink) throw new Error("that idempotency key was used for something else");
   const existing = await kv.get(ticketKey(id));
   if (existing) return { ticket: JSON.parse(existing) as Ticket, replayed: true };
   const ticket: Ticket = { id, account, sink, params: cleanParams(params), cents, ts: r.entry.ts, status: "unused" };
-  await kv.set(ticketKey(id), JSON.stringify(ticket));
+  try {
+    await kv.set(ticketKey(id), JSON.stringify(ticket));
+  } catch (e) {
+    // paid but no ticket: give the cents back so a storage hiccup never eats credits
+    if (!r.replayed) await kv.incrby(`cr:bal:${account}`, cents);
+    throw e;
+  }
   return { ticket, replayed: r.replayed };
 }
 
@@ -56,16 +63,20 @@ export async function getTicket(kv: Kv, id: string): Promise<Ticket | null> {
   return raw ? (JSON.parse(raw) as Ticket) : null;
 }
 
-/** Peek: true if the ticket exists, is of this sink and is unused. */
-export async function ticketUsable(kv: Kv, id: string, sink: SinkName): Promise<boolean> {
+/**
+ * Peek: true if the ticket exists, is of this sink, is unused AND belongs to `account`. A ticket is not a bearer
+ * token: only the account that bought it (proved by its signed cookie) can redeem it, so a leaked or shared ticket
+ * id is useless to anyone else.
+ */
+export async function ticketUsable(kv: Kv, id: string, sink: SinkName, account: string | null): Promise<boolean> {
   const t = await getTicket(kv, id);
-  return !!t && t.sink === sink && t.status === "unused" && !(await kv.get(`cr:redeemed:${id}`));
+  return !!account && !!t && t.account === account && t.sink === sink && t.status === "unused" && !(await kv.get(`cr:redeemed:${id}`));
 }
 
 /** Redeem once. The setnx makes concurrent redemptions safe: exactly one caller wins. */
-export async function redeemTicket(kv: Kv, id: string, sink: SinkName): Promise<Ticket | null> {
+export async function redeemTicket(kv: Kv, id: string, sink: SinkName, account: string | null): Promise<Ticket | null> {
   const t = await getTicket(kv, id);
-  if (!t || t.sink !== sink || t.status !== "unused") return null;
+  if (!account || !t || t.account !== account || t.sink !== sink || t.status !== "unused") return null;
   if (!(await kv.setnx(`cr:redeemed:${id}`, "1"))) return null;
   const done: Ticket = { ...t, status: "redeemed" };
   await kv.set(ticketKey(id), JSON.stringify(done));

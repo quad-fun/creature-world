@@ -52,6 +52,8 @@ test("cookie signature: tamper and wrong key are rejected; prod needs a secret",
   assert.equal(verify("garbage", "k1"), null);
   assert.equal(readCookie(`x=1; ${COOKIE}=${v}`), v);
   assert.throws(() => secret({ VERCEL_ENV: "production" }));
+  assert.throws(() => secret({ VERCEL_ENV: "preview" }));
+  assert.throws(() => secret({ NODE_ENV: "production" }));
   assert.ok(secret({}));
 });
 
@@ -72,11 +74,11 @@ test("ticket redeems exactly once and only for its sink", async () => {
   const a = acct();
   await apply(kv(), a, 500, "topup", "t");
   const { ticket } = await spend(kv(), a, "launch_creature");
-  assert.equal(await ticketUsable(kv(), ticket.id, "launch_site"), false);
-  assert.equal(await ticketUsable(kv(), ticket.id, "launch_creature"), true);
-  assert.ok(await redeemTicket(kv(), ticket.id, "launch_creature"));
-  assert.equal(await redeemTicket(kv(), ticket.id, "launch_creature"), null);
-  assert.equal(await ticketUsable(kv(), ticket.id, "launch_creature"), false);
+  assert.equal(await ticketUsable(kv(), ticket.id, "launch_site", a), false);
+  assert.equal(await ticketUsable(kv(), ticket.id, "launch_creature", a), true);
+  assert.ok(await redeemTicket(kv(), ticket.id, "launch_creature", a));
+  assert.equal(await redeemTicket(kv(), ticket.id, "launch_creature", a), null);
+  assert.equal(await ticketUsable(kv(), ticket.id, "launch_creature", a), false);
 });
 
 const req = (headers: Record<string, string>, body: unknown = {}) =>

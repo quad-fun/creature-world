@@ -12,6 +12,7 @@ export const NAME_MAX = 24;
 export const DESC_MAX = 120;
 export const MAX_CUSTOM_ITEMS = 24;
 export const MAX_APPRAISALS_PER_DAY = 6; // town-wide model appraisals per UTC day
+export const MAX_APPRAISALS_PER_TICK = 2; // keeps a locked tick short
 export const PUSH_MIN = -0.05;
 export const PUSH_MAX = 0.15;
 export const MAX_TAGS = 4;

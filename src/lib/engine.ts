@@ -7,6 +7,7 @@ import { seedWorld } from "./content";
 import { prepareMakes } from "./library";
 import { applyInbox } from "./inbox";
 import { appraiseGifts } from "./appraise";
+import { cleanLine } from "./library";
 import { STEP, kickQueue, logFeed, needsDecision, stepWorld, validateMoves } from "./sim";
 import { getStore } from "./store";
 import type { Creature, World } from "./types";
@@ -20,7 +21,14 @@ export const config = () => ({
   minTickS: num(process.env.MIN_TICK_INTERVAL_S, 20),
   dailyCalls: num(process.env.DAILY_CALLS_PER_CREATURE, 200),
   maxSteps: 288, // at most one world day of catch-up per call
+  modelWindowMs: MODEL_WINDOW_MS,
 });
+
+/**
+ * No NEW model call starts after this long into a locked tick. Every call is bounded by a 20s abort signal, so a tick
+ * ends well inside the 55s lock TTL and the 60s function limit (25s + 20s + a little storage time).
+ */
+export const MODEL_WINDOW_MS = 25_000;
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
 
@@ -44,12 +52,12 @@ function consolidate(w: World, c: Creature) {
   if (c.diary.length > 60) c.diary = c.diary.slice(-60);
 }
 
-async function think(w: World, c: Creature, canUseModel: boolean) {
+async function think(w: World, c: Creature, canUseModel: boolean, deadline = Infinity) {
   const day = utcDay();
   if (c.calls.day !== day) c.calls = { day, n: 0 };
   const st = w.stats;
   const budgetOk = () => c.calls.n < config().dailyCalls;
-  const modelOk = () => canUseModel && budgetOk() && (st.pausedUntilMs ?? 0) < Date.now();
+  const modelOk = () => canUseModel && budgetOk() && (st.pausedUntilMs ?? 0) < Date.now() && Date.now() < deadline;
 
   const noteError = (e: unknown) => {
     st.errors++;
@@ -74,10 +82,15 @@ async function think(w: World, c: Creature, canUseModel: boolean) {
         c.calls.n++;
         const r = await reflectWithModel(w, c, recent);
         noteOk(r.usage);
-        for (const line of r.diary) if (line.trim()) c.diary.push({ t: w.t, text: line });
-        if (r.self.trim()) c.sheet.self = r.self; // locked lines are never touched
-        logFeed(w, c.id, "diary", `${c.sheet.name} writes in the diary.`, r.diary.join(" "), "model");
-        done = true;
+        // The diary and the self-note are public and feed the next prompt: same filter as visitor text, line by line.
+        const lines = r.diary.map((l) => cleanLine(l, 300)).filter((l): l is string => !!l);
+        for (const line of lines) c.diary.push({ t: w.t, text: line });
+        const self = cleanLine(r.self, 700);
+        if (self) c.sheet.self = self; // locked lines are never touched
+        if (lines.length) {
+          logFeed(w, c.id, "diary", `${c.sheet.name} writes in the diary.`, lines.join(" "), "model");
+          done = true;
+        }
       } catch (e) {
         noteError(e);
       }
@@ -130,7 +143,7 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
     world = (await store.load()) ?? world; // reload after taking the lock
     const inbox = await store.drainInbox();
     if (inbox.length) {
-      await appraiseGifts(world, inbox); // at most a few cheap calls a day; rules fallback otherwise
+      await appraiseGifts(world, inbox, { deadline: Date.now() + cfg.modelWindowMs }); // few cheap calls a day, at most 2 per tick; rules fallback otherwise
       applyInbox(world, inbox);
     }
     const now = Date.now();
@@ -158,9 +171,10 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
 
     // Present moment: the model gets a say for creatures who need to decide or reflect.
     const useModel = modelAvailable();
+    const deadline = Date.now() + cfg.modelWindowMs;
     const waking = Object.values(world.creatures).filter((c) => c.sleptSinceReflect && !c.activity).map((c) => c.id);
     const ids = [...new Set([...need, ...waking])];
-    await Promise.all(ids.map((id) => think(world, world.creatures[id], useModel)));
+    await Promise.all(ids.map((id) => think(world, world.creatures[id], useModel, deadline)));
     await store.save(world);
     return { ran: true, steps, world };
   } finally {

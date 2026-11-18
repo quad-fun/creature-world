@@ -1,7 +1,7 @@
 import { apply } from "@/lib/credits/ledger";
 import { withAccount } from "@/lib/credits/http";
 import { getProvider } from "@/lib/credits/provider";
-import { readJson } from "@/lib/http";
+import { clientIp, readJson } from "@/lib/http";
 import { getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,8 @@ export async function POST(req: Request) {
   const cents = Number(body.cents ?? 500);
   if (!AMOUNTS.includes(cents)) return a.json({ error: `amount must be one of ${AMOUNTS.join(", ")} cents` }, 400);
   const store = getStore();
-  if (!(await store.hit(`credits:topup:${a.id}`, 10, 86400))) return a.json({ error: "top-up limit reached for today" }, 429);
+  // Accounts are free to create, so the limit is per network address too, not just per account.
+  if (!(await store.hit(`credits:topup:${a.id}`, 10, 86400)) || !(await store.hit(`credits:topup:ip:${clientIp(req)}`, 20, 86400))) return a.json({ error: "top-up limit reached for today" }, 429);
   try {
     const p = getProvider();
     const t = await p.createTopUp(a.id, cents);

@@ -6,7 +6,8 @@ const DEV_SECRET = "dev-only-credits-secret-not-for-production";
 
 export function secret(env: Record<string, string | undefined> = process.env): string {
   if (env.CREDITS_SECRET) return env.CREDITS_SECRET;
-  if (env.VERCEL_ENV === "production") throw new Error("CREDITS_SECRET is required in production");
+  // Any deployed environment (production, preview) or a production build elsewhere needs a real secret; only local dev may fall back.
+  if (env.VERCEL_ENV || env.NODE_ENV === "production") throw new Error("CREDITS_SECRET is required when deployed");
   return DEV_SECRET;
 }
 
@@ -39,7 +40,7 @@ export function readCookie(header: string | null, name = COOKIE): string | null 
 }
 
 export function setCookieHeader(id: string, env: Record<string, string | undefined> = process.env): string {
-  const secure = env.VERCEL_ENV ? "; Secure" : "";
+  const secure = env.VERCEL_ENV || env.NODE_ENV === "production" ? "; Secure" : "";
   return `${COOKIE}=${sign(id, secret(env))}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${secure}`;
 }
 

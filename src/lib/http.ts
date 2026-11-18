@@ -5,6 +5,7 @@ export const clientIp = (req: Request) =>
 
 export async function readJson(req: Request): Promise<Record<string, unknown> | null> {
   try {
+    if (Number(req.headers.get("content-length") ?? 0) > 8000) return null; // do not even read a huge body
     const text = await req.text();
     if (text.length > 4000) return null;
     const v = JSON.parse(text);

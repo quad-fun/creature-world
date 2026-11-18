@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadWorld } from "@/lib/engine";
 import { creatureView } from "@/lib/view";
+import { own } from "@/lib/own";
 import { renderSvg } from "@/lib/library";
 import { GiftForm } from "../../gift-form";
 
@@ -16,7 +17,7 @@ function stamp(t: number) {
 export default async function CreaturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { world } = await loadWorld();
-  const base = world.creatures[id];
+  const base = own(world.creatures, id);
   if (!base) notFound();
   const c = creatureView(world, base);
   const recent = world.feed.filter((f) => f.creature === id).slice(-25).reverse();
