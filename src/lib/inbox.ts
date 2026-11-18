@@ -1,0 +1,90 @@
+// What the outside world can do to the town: leave a note, give a treat, adopt a creature.
+// Everything is sanitised here, applied by the tick engine under its lock, and visible in the feed.
+// Nothing from outside can touch a creature's drives, sheet or locked lines directly.
+import { appraise, impulse } from "./affect";
+import { checkAll, checkText } from "./filter";
+import { ITEMS, MAX_CREATURES, SPECIES_EMOJI, base } from "./content";
+import { logFeed, remember, touchBond } from "./sim";
+import type { InboxItem, World } from "./types";
+
+const URL_RE = /(https?:\/\/|www\.)\S+/gi;
+
+/** Plain, short, single-line text with no markup and no links. */
+export function sanitizeText(s: unknown, max: number): string {
+  return String(s ?? "")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(URL_RE, "")
+    .replace(/[<>`{}\[\]\\]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+export function sanitizeName(s: unknown, max = 20): string {
+  return String(s ?? "")
+    .replace(/[^\p{L}\p{N} '-]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+export function sanitizeList(xs: unknown, maxItems: number, maxLen: number): string[] {
+  if (!Array.isArray(xs)) return [];
+  return xs.map((x) => sanitizeText(x, maxLen).toLowerCase()).filter(Boolean).slice(0, maxItems);
+}
+
+function pushBoard(w: World, by: string, byKind: "creature" | "visitor", text: string, to?: string) {
+  w.board.push({ id: ++w.boardSeq, t: w.t, ts: Date.now(), by, byKind, to, text });
+  if (w.board.length > 60) w.board.splice(0, w.board.length - 60);
+}
+
+export function applyInbox(w: World, items: InboxItem[]) {
+  for (const it of items) {
+    if (it.type === "note") {
+      const c = w.creatures[it.to];
+      const from = sanitizeName(it.from) || "a visitor";
+      const text = sanitizeText(it.text, 200);
+      if (!c || !text || !checkText(text).ok) continue;
+      c.heard.push({ t: w.t, from: `${from} (a visitor)`, text });
+      if (c.heard.length > 6) c.heard.shift();
+      impulse(c, 0.06 + appraise(c, [], text) * 0.5, 0.1);
+      c.drives.social = Math.min(1, c.drives.social + 0.1);
+      remember(w, c, `A visitor named ${from} told me: “${text}”`, 0.55);
+      pushBoard(w, from, "visitor", text, c.sheet.name);
+      logFeed(w, c.id, "say", `${from} (a visitor) leaves a note for ${c.sheet.name}: “${text}”`);
+    } else if (it.type === "treat") {
+      const c = w.creatures[it.to];
+      const from = sanitizeName(it.from) || "a visitor";
+      if (!c) continue;
+      if (c.inventory.length < 5) c.inventory.push("bread");
+      impulse(c, 0.12 + appraise(c, ITEMS.bread.tags) * 0.5, 0.1);
+      remember(w, c, `A visitor named ${from} left me a loaf of bread.`, 0.6);
+      logFeed(w, c.id, "move", `${from} (a visitor) leaves a loaf of bread for ${c.sheet.name}.`);
+    } else if (it.type === "adopt") {
+      if (Object.keys(w.creatures).length >= MAX_CREATURES) continue;
+      const name = sanitizeName(it.name);
+      if (name.length < 2 || !(it.species in SPECIES_EMOJI)) continue;
+      if (!checkText(name).ok || checkAll([...it.temperament, ...it.likes, ...it.dislikes, it.voice ?? ""])) continue;
+      if (Object.values(w.creatures).some((o) => o.sheet.name.toLowerCase() === name.toLowerCase())) continue;
+      let id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "creature";
+      while (w.creatures[id]) id += "x";
+      const baseline = 0.1 + ((name.length * 7) % 20) / 100; // 0.10..0.29, stable per name
+      const c = base(id, it.species, SPECIES_EMOJI[it.species], "nests", baseline, {
+        name,
+        temperament: it.temperament.slice(0, 3),
+        likes: it.likes.slice(0, 5),
+        dislikes: it.dislikes.slice(0, 3),
+        voice: it.voice || "Plain and friendly.",
+        locked: [`${name} never harms another creature.`, `${name} never leaves the town.`],
+        self: "I am new in town and still finding out who I am.",
+      });
+      for (const o of Object.values(w.creatures)) {
+        remember(w, o, `${name} the ${it.species} arrived in town.`, 0.5);
+        touchBond(o, id, { familiarity: 0.02 });
+      }
+      w.creatures[id] = c;
+      logFeed(w, "world", "system", `${name} the ${it.species} arrives in town, adopted by a visitor.`);
+    }
+  }
+}
