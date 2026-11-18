@@ -220,7 +220,7 @@ test("a ticket is not a bearer token: only the buying account can use or redeem 
   assert.equal(hit.filter(Boolean).length, 1, "concurrent redemption: exactly one winner");
 });
 
-test("adopt with REQUIRE_TICKET: no cookie, wrong cookie and forged cookie are all refused", async () => {
+test("adopt with REQUIRE_TICKET: no cookie, wrong cookie and forged cookie are all refused at the nests", async () => {
   process.env.REQUIRE_TICKET = "1";
   process.env.CREDITS_SECRET = "test-secret";
   try {
@@ -518,4 +518,30 @@ test("engine make path with hostile written work: at most one extra call, nothin
   } finally {
     modelRef.current = "anthropic/claude-haiku-5.5";
   }
+});
+
+test("coins and carrying: a gift cannot overfill a creature's hands, and no move makes coins from nothing", () => {
+  const w = seedWorld(0);
+  const a = w.creatures.moss, b = w.creatures.pip;
+  a.place = b.place = "park";
+  a.inventory = ["bread"];
+  b.inventory = Array(MAX_CARRY).fill("bread");
+  assert.equal(validateMoves(w, a, [{ do: "gift", target: "pip", item: "bread", why: "x" }]).moves.length, 0);
+  const total = () => Object.values(w.creatures).reduce((n, c) => n + c.coins, 0);
+  const before = total();
+  for (const c of Object.values(w.creatures)) { c.inventory = []; c.place = "nests"; }
+  for (const mv of [{ do: "sell", item: "trinket" }, { do: "buy_food" }, { do: "make", kind: "note" }, { do: "buy_slot" }, { do: "launch_site", title: "t", text: "t" }] as const) {
+    for (const c of Object.values(w.creatures)) assert.equal(validateMoves(w, c, [{ ...mv, why: "x" } as never]).moves.length, 0, mv.do); // nothing owned, nowhere near: all refused at the nests
+  }
+  assert.equal(total(), before);
+});
+
+test("rules mode: ten world days from a fresh world keep every invariant", () => {
+  const w = seedWorld(0);
+  const locked = Object.fromEntries(Object.entries(w.creatures).map(([id, c]) => [id, [...c.sheet.locked]]));
+  for (let i = 0; i < 288 * 10; i++) {
+    for (const id of stepWorld(w)) applyRulesForTest(w, w.creatures[id]);
+    if (i % 288 === 0) checkInvariants(w, locked, `rules day ${i / 288}`);
+  }
+  checkInvariants(w, locked, "rules end");
 });

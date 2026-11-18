@@ -190,6 +190,7 @@ export const usable = (w: World, id: ItemId): boolean => {
 
 /** Stops gifts bouncing back and forth, and one-sided streams of gifts. Returns a reason or null. */
 export function giftBlocked(w: World, c: Creature, o: Creature, item: ItemId): string | null {
+  if (o.inventory.length >= MAX_CARRY) return `${o.sheet.name}'s hands are full`;
   if (c.received.some((r) => r.from === o.id && r.item === item && w.t - r.t < 480)) return `${o.sheet.name} gave me that a moment ago`;
   if (familiarity(c, `gift:${o.id}`, w.t) >= 1.5) return `already gave ${o.sheet.name} something lately`;
   return null;
