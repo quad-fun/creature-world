@@ -3,9 +3,10 @@
 // It uses the same novelty/interest/pursuit logic as the world: after urgent needs, each option is
 // scored by how much the creature wants it times how fresh it is, so non-model moments vary too.
 import { needLevel } from "./affect";
-import { BREAD_PRICE, ITEMS, SPECIES } from "./content";
+import { BREAD_PRICE, SPECIES } from "./content";
 import { familiarity, interestStrength, noteExposure, novelty, payoffScale, stepKindFor, topicOf } from "./novelty";
-import { MAX_CARRY, clockOf, creaturesAt, giftBlocked, pick, rand } from "./sim";
+import { itemDef } from "./items";
+import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand } from "./sim";
 import type { Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
 const LINES: Record<Creature["species"], string[]> = {
@@ -26,8 +27,8 @@ export function ruleMoves(w: World, c: Creature): Move[] {
   const hunger = needLevel(c, "hunger");
   const lonely = needLevel(c, "loneliness");
   const bored = needLevel(c, "boredom");
-  const food = c.inventory.find((i) => ITEMS[i].food > 0);
-  const sellables = c.inventory.filter((i) => ITEMS[i].sell > 0);
+  const food = c.inventory.find((i) => itemDef(w, i).food > 0);
+  const sellables = c.inventory.filter((i) => itemDef(w, i).sell > 0);
   const craftItem = SPECIES[c.species].craft;
   const awakeHere = creaturesAt(w, c.place, c.id).filter((o) => o.activity?.kind !== "sleep");
 
@@ -78,6 +79,13 @@ export function ruleMoves(w: World, c: Creature): Move[] {
     const topic = topicOf("craft", "workshop", craftItem);
     const want = 0.5 - 0.12 * sellables.length;
     add("craft", want, [...walkTo(c.place, "workshop", "I feel like making something."), { do: "craft", why: "Keeping my hands busy." }], `craft:${craftItem}`, (topic ? interestStrength(c, topic) * 0.3 : 0) + pursuitBonus("craft", topic));
+  }
+
+  // something unusual to play with, if carried: new things are worth more
+  const toy = c.inventory.find((i) => usable(w, i));
+  if (toy) {
+    const others = awakeHere.filter((o) => o.activity?.kind !== "sleep");
+    add("use", 0.3 + 0.4 * bored, [{ do: "use", item: toy, target: others[0]?.id, why: `I want to spend time with my ${itemDef(w, toy).name}.` }], `use:${toy}`);
   }
 
   // play at the place that is least familiar right now

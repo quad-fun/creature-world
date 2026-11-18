@@ -1,7 +1,8 @@
 // Public, read-only projection of the world for the UI and the open read API.
 import { activeInfluences, bondWord, energyWord, influenceWord, influenceWords, moodWord, moodWords } from "./affect";
 import { interestWord, pursuitWord } from "./novelty";
-import { ITEMS, MAX_CREATURES, PLACES } from "./content";
+import { itemDef } from "./items";
+import { MAX_CREATURES, PLACES } from "./content";
 import { config } from "./engine";
 import { MODEL_ID, modelAvailable } from "./mind";
 import { clockOf, describeActivity } from "./sim";
@@ -33,7 +34,7 @@ export function creatureView(w: World, c: Creature) {
     interests: c.interests.filter((i) => i.strength >= 0.15).map((i) => ({ topic: i.topic, word: interestWord(i.strength), strength: i.strength })),
     pursuit: c.pursuit ? { title: c.pursuit.title, word: pursuitWord(c.pursuit), progress: c.pursuit.progress, steps: c.pursuit.steps, setbacks: c.pursuit.setbacks } : null,
     coins: c.coins,
-    inventory: c.inventory.map((i) => ITEMS[i].name),
+    inventory: c.inventory.map((i) => itemDef(w, i).name),
     source: c.lastSource,
     callsToday: c.calls.n,
     goal: c.goal,
@@ -55,7 +56,7 @@ export function publicView(w: World, storage: "redis" | "memory") {
     clock: { day: clk.day, label: clk.label, period: clk.period, isNight: clk.isNight, t: w.t },
     places: Object.fromEntries(Object.entries(PLACES).map(([id, p]) => [id, { name: p.name, blurb: p.blurb }])),
     bakeryStock: w.bakeryStock,
-    market: Object.fromEntries(Object.entries(w.market).map(([k, v]) => [k, Math.max(1, Math.round(ITEMS[k as keyof typeof ITEMS].sell * v))])),
+    market: Object.fromEntries(Object.entries(w.market).map(([k, v]) => [k, Math.max(1, Math.round(itemDef(w, k).sell * v))])),
     creatures: Object.values(w.creatures).map((c) => creatureView(w, c)),
     feed: w.feed.slice(-80),
     board: [...w.board].reverse().slice(0, 20),

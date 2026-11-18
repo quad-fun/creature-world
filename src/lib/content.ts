@@ -1,7 +1,7 @@
 // Static content: places, items, species and the three starting creatures.
 import { ensureNeeds } from "./affect";
 import { seedInterests } from "./novelty";
-import type { Creature, ItemId, PlaceId, World } from "./types";
+import type { CatalogItemId, Creature, ItemId, PlaceId, World } from "./types";
 
 /** Rise in need-level per world minute while awake (energy: fall in the energy bar). */
 export type Rates = { hunger: number; energy: number; loneliness: number; boredom: number; comfort: number };
@@ -23,13 +23,13 @@ export function travelMinutes(a: PlaceId, b: PlaceId): number {
   return 3 * (Math.abs(pa.x - pb.x) + Math.abs(pa.y - pb.y));
 }
 
-export const ITEMS: Record<ItemId, { name: string; tags: string[]; food: number; sell: number }> = {
+export const ITEMS: Record<CatalogItemId, { name: string; tags: string[]; food: number; sell: number }> = {
   bread: { name: "bread", tags: ["food", "bread", "warm"], food: 0.5, sell: 0 },
   "mended-thing": { name: "mended thing", tags: ["mending", "useful"], food: 0, sell: 4 },
   trinket: { name: "shiny trinket", tags: ["shiny", "small"], food: 0, sell: 3 },
   potion: { name: "herbal potion", tags: ["herb", "strange"], food: 0, sell: 5 },
 };
-export const ITEM_IDS = Object.keys(ITEMS) as ItemId[];
+export const ITEM_IDS = Object.keys(ITEMS) as CatalogItemId[];
 
 export const BREAD_PRICE = 2;
 export const BAKERY_MAX_STOCK = 6;
@@ -78,6 +78,7 @@ export function base(
     activity: null,
     queue: [],
     inventory: [],
+    uses: {},
     coins: 6,
     bonds: {},
     memories: [],
@@ -134,6 +135,8 @@ export function seedWorld(nowMs: number): World {
     rng: 123456789,
     creatures: seedCreatures(),
     bakeryStock: BAKERY_MAX_STOCK,
+    items: {},
+    appraisals: { day: "", n: 0 },
     market: { "mended-thing": 1, trinket: 1, potion: 1 },
     feed: [
       {

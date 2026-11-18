@@ -2,7 +2,25 @@
 // All state is plain JSON so it can live in a single Redis key.
 
 export type PlaceId = "fountain" | "workshop" | "bakery" | "pond" | "park" | "nests";
-export type ItemId = "bread" | "mended-thing" | "trinket" | "potion";
+export type CatalogItemId = "bread" | "mended-thing" | "trinket" | "potion";
+/** A catalog id, or "x-<slug>" for an appraised visitor gift (resolved through items.ts itemDef). */
+export type ItemId = string;
+export type ItemKind = "toy" | "food" | "tool" | "art" | "wearable" | "curio";
+
+/** An appraised, visitor-given item. Only these bounded, filtered fields ever reach a creature. */
+export interface CustomItem {
+  id: ItemId;
+  name: string;
+  kind: ItemKind;
+  mood: number; // push per use, capped
+  energy: number; // push per use, capped
+  durability: number; // uses before it wears out, 1..10
+  tags: string[]; // max 4 short words
+  desc: string; // one neutral sentence written by the appraiser
+  source: "model" | "rules";
+  createdT: number;
+  lastUsedT: number;
+}
 export type MoveKind =
   | "walk"
   | "speak"
@@ -14,6 +32,7 @@ export type MoveKind =
   | "rest"
   | "sleep"
   | "play"
+  | "use"
   | "post"
   | "wait";
 
@@ -63,7 +82,7 @@ export interface Move {
   do: MoveKind;
   place?: PlaceId; // walk
   target?: string; // speak / gift: creature id
-  item?: ItemId; // eat / sell / gift
+  item?: ItemId; // eat / sell / gift / use
   text?: string; // speak
   why: string;
 }
@@ -120,6 +139,7 @@ export interface Creature {
   activity: Activity | null;
   queue: Move[];
   inventory: ItemId[];
+  uses: Record<string, number>; // uses consumed on the current copy of a custom item
   coins: number;
   bonds: Record<string, Bond>;
   memories: Memory[];
@@ -169,6 +189,7 @@ export interface BoardEntry {
 export type InboxItem =
   | { type: "note"; to: string; from: string; text: string }
   | { type: "treat"; to: string; from: string }
+  | { type: "gift"; to: string; from: string; name: string; description: string }
   | {
       type: "adopt";
       name: string;
@@ -186,6 +207,8 @@ export interface World {
   rng: number;
   creatures: Record<string, Creature>;
   bakeryStock: number;
+  items: Record<string, CustomItem>; // appraised custom items (also the appraisal cache), capped
+  appraisals: { day: string; n: number }; // model appraisals made today (cost guard)
   market: Record<string, number>; // item -> saturation 0.3..1 (price multiplier)
   feed: FeedEntry[];
   feedSeq: number;

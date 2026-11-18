@@ -11,6 +11,8 @@ type Legacy = Creature & {
 export function migrate(w: World): World {
   w.board ??= [];
   w.boardSeq ??= 0;
+  w.items ??= {};
+  w.appraisals ??= { day: "", n: 0 };
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
     c.goal ??= "";
@@ -34,6 +36,7 @@ export function migrate(w: World): World {
     c.pursuit ??= null;
     c.lastPursuitEndT ??= -10000;
     c.received ??= [];
+    c.uses ??= {};
     c.interests ??= seedInterests(c);
     for (const m of c.memories ?? []) if (typeof m.valence !== "number") m.valence = 0;
   }

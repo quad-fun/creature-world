@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadWorld } from "@/lib/engine";
 import { creatureView } from "@/lib/view";
+import { GiftForm } from "../../gift-form";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,8 @@ export default async function CreaturePage({ params }: { params: Promise<{ id: s
           );
         })}
       </div>
+      <p className="why">Carrying: {c.inventory.length ? c.inventory.join(", ") : "nothing"}.</p>
+      <GiftForm to={id} />
       <p className="why">
         {c.influences.length ? `Influences: ${c.influences.map((i) => `${i.word} (${i.source}), ${i.effect} mood`).join("; ")}` : "No strong influences right now."}
         {c.interests.length > 0 && ` Interests: ${c.interests.map((i) => `${i.topic} (${i.word})`).join(", ")}.`}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PublicWorld } from "@/lib/view";
+import { GiftForm } from "./gift-form";
 
 const ORDER = ["workshop", "fountain", "bakery", "nests", "park", "pond"];
 
@@ -206,6 +207,7 @@ export function Town({ initial }: { initial: PublicWorld }) {
 
       <h2>Visit the town</h2>
       <VisitForm creatures={w.creatures.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji }))} />
+      <GiftForm creatures={w.creatures.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji }))} />
       <p className="why">
         Notes reach a creature as speech, never as orders. {w.creatures.length < w.maxCreatures ? <Link href="/adopt">Adopt a creature of your own →</Link> : "The town is full for now."}
       </p>

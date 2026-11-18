@@ -5,6 +5,7 @@ import { decideWithModel, modelAvailable, reflectWithModel } from "./mind";
 import { ruleMoves } from "./rules";
 import { seedWorld } from "./content";
 import { applyInbox } from "./inbox";
+import { appraiseGifts } from "./appraise";
 import { STEP, kickQueue, logFeed, needsDecision, stepWorld, validateMoves } from "./sim";
 import { getStore } from "./store";
 import type { Creature, World } from "./types";
@@ -126,7 +127,10 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
   try {
     world = (await store.load()) ?? world; // reload after taking the lock
     const inbox = await store.drainInbox();
-    if (inbox.length) applyInbox(world, inbox);
+    if (inbox.length) {
+      await appraiseGifts(world, inbox); // at most a few cheap calls a day; rules fallback otherwise
+      applyInbox(world, inbox);
+    }
     const now = Date.now();
     let steps = Math.floor((((now - world.lastRealMs) / 60_000) * cfg.timeScale) / STEP);
     if (steps < 1) {

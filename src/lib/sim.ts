@@ -5,13 +5,12 @@ import { exposeInterest, familiarity, interestStrength, noteExposure, novelty, p
 import {
   BAKERY_MAX_STOCK,
   BREAD_PRICE,
-  ITEMS,
-  ITEM_IDS,
   PLACES,
   PLACE_IDS,
   SPECIES,
   travelMinutes,
 } from "./content";
+import { itemDef, matchItemId, touchItem, useEffect } from "./items";
 import type { Bond, Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
 export const STEP = 5; // world minutes per simulation step
@@ -19,7 +18,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "post", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "wait"];
 
 // ---------- small helpers ----------
 
@@ -114,6 +113,8 @@ export function describeActivity(w: World, c: Creature): string {
       return `talking to ${w.creatures[m.target ?? ""]?.sheet.name ?? "someone"}`;
     case "gift":
       return "handing over a gift";
+    case "use":
+      return "using something they carry";
     case "post":
       return "pinning a notice";
     case "buy_food":
@@ -129,10 +130,7 @@ const matchPlace = (s: string): PlaceId | undefined => {
   const x = s.toLowerCase().trim();
   return PLACE_IDS.find((p) => p === x || PLACES[p].name.toLowerCase().includes(x) || x.includes(p));
 };
-const matchItem = (s: string): ItemId | undefined => {
-  const x = s.toLowerCase().trim();
-  return ITEM_IDS.find((i) => i === x || ITEMS[i].name.toLowerCase() === x || x.includes(i));
-};
+const matchItem = (w: World, s: string): ItemId | undefined => matchItemId(w, s);
 const matchCreature = (w: World, s: string): string | undefined => {
   const x = s.toLowerCase().trim();
   return Object.values(w.creatures).find((o) => o.id === x || o.sheet.name.toLowerCase() === x)?.id;
@@ -146,7 +144,7 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
   const m: Move = { do: r.do as MoveKind, why: clean(r.why, 200) };
   if (typeof r.place === "string") m.place = matchPlace(r.place);
   if (typeof r.target === "string") m.target = matchCreature(w, r.target);
-  if (typeof r.item === "string") m.item = matchItem(r.item);
+  if (typeof r.item === "string") m.item = matchItem(w, r.item);
   if (typeof r.text === "string" && r.text.trim()) m.text = clean(r.text, 240);
   return m;
 }
@@ -164,6 +162,12 @@ function takeItem(inv: ItemId[], want: ItemId | undefined, ok: (i: ItemId) => bo
   const [item] = inv.splice(idx, 1);
   return ok(item) ? item : undefined;
 }
+
+/** Only appraised (custom) non-food items can be used; food is eaten, catalog goods are for selling and gifts. */
+export const usable = (w: World, id: ItemId): boolean => {
+  const d = itemDef(w, id);
+  return d.custom && d.kind !== "food";
+};
 
 /** Stops gifts bouncing back and forth, and one-sided streams of gifts. Returns a reason or null. */
 export function giftBlocked(w: World, c: Creature, o: Creature, item: ItemId): string | null {
@@ -198,7 +202,7 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       return null;
     }
     case "eat": {
-      const item = takeItem(p.inv, m.item, (i) => ITEMS[i].food > 0);
+      const item = takeItem(p.inv, m.item, (i) => itemDef(w, i).food > 0);
       if (!item) return "no food to eat";
       m.item = item;
       return null;
@@ -219,10 +223,10 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       return null;
     case "sell": {
       if (p.place !== "fountain") return "not at the market stall";
-      const item = takeItem(p.inv, m.item, (i) => ITEMS[i].sell > 0);
+      const item = takeItem(p.inv, m.item, (i) => itemDef(w, i).sell > 0);
       if (!item) return "nothing to sell";
       m.item = item;
-      p.coins += ITEMS[item].sell;
+      p.coins += itemDef(w, item).sell;
       return null;
     }
     case "gift": {
@@ -233,6 +237,19 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       if (!item) return "nothing to give";
       m.item = item;
       return giftBlocked(w, c, o, item);
+    }
+    case "use": {
+      const item = m.item;
+      if (!item || !p.inv.includes(item)) return "nothing like that to use";
+      if (!usable(w, item)) return `${itemDef(w, item).name} is not something to use`;
+      m.item = item;
+      if (m.target) {
+        const o = w.creatures[m.target];
+        if (!o || o.id === c.id) m.target = undefined;
+        else if (o.place !== p.place) return `${o.sheet.name} is not there`;
+        else if (o.activity?.kind === "sleep") return `${o.sheet.name} is asleep`;
+      }
+      return null;
     }
     case "post":
       if (!m.text) return "nothing to post";
@@ -329,7 +346,7 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
       const item = m.item;
       if (!item || !removeOne(c.inventory, item)) return "nothing to eat";
       begin(10);
-      say(`${name} eats ${ITEMS[item].name}.`);
+      say(`${name} eats ${itemDef(w, item).name}.`);
       return null;
     }
     case "buy_food": {
@@ -353,9 +370,9 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     case "sell": {
       if (c.place !== "fountain") return "not at the market stall";
       const item = m.item;
-      if (!item || ITEMS[item].sell <= 0 || !removeOne(c.inventory, item)) return "nothing to sell";
+      if (!item || itemDef(w, item).sell <= 0 || !removeOne(c.inventory, item)) return "nothing to sell";
       begin(10);
-      say(`${name} offers ${ITEMS[item].name} at the stall.`);
+      say(`${name} offers ${itemDef(w, item).name} at the stall.`);
       return null;
     }
     case "gift": {
@@ -369,8 +386,8 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
       const dup = o.inventory.filter((i) => i === item).length;
       o.inventory.push(item);
       begin(2);
-      say(`${name} gives ${o.sheet.name} ${ITEMS[item].name}.`);
-      const fit = appraise(o, [...ITEMS[item].tags, "gift"]);
+      say(`${name} gives ${o.sheet.name} ${itemDef(w, item).name}.`);
+      const fit = appraise(o, [...itemDef(w, item).tags, "gift"]);
       const pm = payoffScale(novelty(o, `item:${item}`, w.t)) * (dup >= 1 ? 0.6 : 1);
       noteExposure(o, `item:${item}`, w.t);
       impulse(o, (0.05 + fit * 0.3) * pm, 0.05);
@@ -382,8 +399,19 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
       const giveNov = practise(w, c, `gift:${o.id}`);
       addInfluence(c, "joy", `gave ${o.sheet.name} a gift`, 0.2 * payoffScale(giveNov));
       impulse(c, 0.02);
-      remember(w, o, `${name} gave me ${ITEMS[item].name}.`, 0.5 + Math.abs(fit));
-      remember(w, c, `I gave ${o.sheet.name} ${ITEMS[item].name}.`, 0.4);
+      remember(w, o, `${name} gave me ${itemDef(w, item).name}.`, 0.5 + Math.abs(fit));
+      remember(w, c, `I gave ${o.sheet.name} ${itemDef(w, item).name}.`, 0.4);
+      return null;
+    }
+    case "use": {
+      const item = m.item;
+      if (!item || !c.inventory.includes(item) || !usable(w, item)) return "nothing to use";
+      const o = m.target ? w.creatures[m.target] : undefined;
+      if (o && (o.place !== c.place || o.activity?.kind === "sleep")) m.target = undefined;
+      const d = itemDef(w, item);
+      begin(10);
+      const verb = { toy: "plays with", tool: "puts to work", art: "admires", wearable: "wears", curio: "turns over", food: "tries" }[d.kind];
+      say(`${name} ${verb} ${d.name}${m.target && o ? ` with ${o.sheet.name}` : ""}.`);
       return null;
     }
     case "post": {
@@ -472,6 +500,14 @@ function pursuitStep(w: World, c: Creature, kind: MoveKind, topic: string) {
   remember(w, c, `I did it: I managed to ${p.title}${p.setbacks ? ", despite setbacks" : ""}.`, 0.9);
 }
 
+/** Apply one bounded item use to a creature: positive mood as a joy influence, energy as a small nudge. */
+function applyUse(c: Creature, d: ReturnType<typeof itemDef>, source: string, pm: number) {
+  const e = useEffect(d, pm);
+  if (e.mood > 0) addInfluence(c, "joy", source, e.mood / 0.45);
+  else impulse(c, e.mood);
+  impulse(c, 0, e.energy);
+}
+
 function finishActivity(w: World, c: Creature) {
   const a = c.activity;
   if (!a) return;
@@ -493,14 +529,39 @@ function finishActivity(w: World, c: Creature) {
     case "eat": {
       const item = m.item!;
       const before = needLevel(c, "hunger");
-      relieve(c, "hunger", ITEMS[item].food);
+      relieve(c, "hunger", itemDef(w, item).food);
       const eaten = before - needLevel(c, "hunger");
-      const fit = appraise(c, ITEMS[item].tags);
+      const fit = appraise(c, itemDef(w, item).tags);
       const pm = payoffScale(novelty(c, `item:${item}`, w.t));
       noteExposure(c, `item:${item}`, w.t);
       impulse(c, 0.03 + (eaten * 0.15 + fit * 0.25) * pm);
-      if (before > 0.4) addInfluence(c, "joy", `a welcome ${ITEMS[item].name}`, 0.3 * pm + Math.max(0, fit) * 0.2);
-      remember(w, c, `I ate ${ITEMS[item].name}${before > 0.7 ? " and it was badly needed" : ""}.`, 0.2 + Math.abs(fit) + (before > 0.7 ? 0.2 : 0));
+      if (itemDef(w, item).custom) applyUse(c, itemDef(w, item), `the ${itemDef(w, item).name}`, pm);
+      if (before > 0.4) addInfluence(c, "joy", `a welcome ${itemDef(w, item).name}`, 0.3 * pm + Math.max(0, fit) * 0.2);
+      remember(w, c, `I ate ${itemDef(w, item).name}${before > 0.7 ? " and it was badly needed" : ""}.`, 0.2 + Math.abs(fit) + (before > 0.7 ? 0.2 : 0));
+      break;
+    }
+    case "use": {
+      const item = m.item!;
+      if (!c.inventory.includes(item)) break;
+      const d = itemDef(w, item);
+      const pm = payoffScale(practise(w, c, `use:${item}`));
+      applyUse(c, d, `the ${d.name}`, pm);
+      touchItem(w, item);
+      const o = m.target ? w.creatures[m.target] : undefined;
+      if (o && o.place === c.place && o.activity?.kind !== "sleep") {
+        applyUse(o, d, `trying ${name}'s ${d.name}`, pm * 0.5);
+        touchBond(o, c.id, { familiarity: 0.02, fondness: 0.02 });
+        touchBond(c, o.id, { familiarity: 0.02, fondness: 0.02 });
+        remember(w, o, `${name} let me try ${d.name}.`, 0.35);
+      }
+      c.uses[item] = (c.uses[item] ?? 0) + 1;
+      remember(w, c, `I spent a while with ${d.name}.`, 0.25);
+      if (c.uses[item] >= d.durability) {
+        removeOne(c.inventory, item);
+        delete c.uses[item];
+        logFeed(w, c.id, "move", `${name}'s ${d.name} is worn out.`);
+        remember(w, c, `My ${d.name} wore out.`, 0.4);
+      }
       break;
     }
     case "craft": {
@@ -511,11 +572,11 @@ function finishActivity(w: World, c: Creature) {
       c.inventory.push(item);
       c.energy = clamp(c.energy - 0.08, ENERGY_FLOOR, 1);
       relieve(c, "comfort", 0.03);
-      const fit = appraise(c, ITEMS[item].tags);
+      const fit = appraise(c, itemDef(w, item).tags);
       impulse(c, (0.02 + fit * 0.4) * pm);
-      addInfluence(c, "accomplishment", `made a ${ITEMS[item].name}`, 0.35 * pm + Math.max(0, fit) * 0.15);
-      logFeed(w, c.id, "move", `${name} finishes a ${ITEMS[item].name}.`);
-      remember(w, c, `I made a ${ITEMS[item].name}.`, 0.2 + 0.4 * nov + Math.max(0, fit));
+      addInfluence(c, "accomplishment", `made a ${itemDef(w, item).name}`, 0.35 * pm + Math.max(0, fit) * 0.15);
+      logFeed(w, c.id, "move", `${name} finishes a ${itemDef(w, item).name}.`);
+      remember(w, c, `I made a ${itemDef(w, item).name}.`, 0.2 + 0.4 * nov + Math.max(0, fit));
       const topic = topicOf("craft", c.place, item);
       if (topic) {
         exposeInterest(c, topic, w.t);
@@ -525,14 +586,14 @@ function finishActivity(w: World, c: Creature) {
     }
     case "sell": {
       const item = m.item!;
-      const price = Math.max(1, Math.round(ITEMS[item].sell * (w.market[item] ?? 1)));
+      const price = Math.max(1, Math.round(itemDef(w, item).sell * (w.market[item] ?? 1)));
       const pm = payoffScale(practise(w, c, `sell:${item}`));
       c.coins += price;
       w.market[item] = Math.max(0.3, (w.market[item] ?? 1) - 0.12);
       impulse(c, (0.015 + price * 0.005) * pm);
-      addInfluence(c, "accomplishment", `sold a ${ITEMS[item].name}`, 0.15 * pm);
-      logFeed(w, c.id, "move", `${name} sells ${ITEMS[item].name} for ${price} coins.`);
-      remember(w, c, `Sold ${ITEMS[item].name} for ${price} coins.`, 0.25);
+      addInfluence(c, "accomplishment", `sold a ${itemDef(w, item).name}`, 0.15 * pm);
+      logFeed(w, c.id, "move", `${name} sells ${itemDef(w, item).name} for ${price} coins.`);
+      remember(w, c, `Sold ${itemDef(w, item).name} for ${price} coins.`, 0.25);
       break;
     }
     case "rest":

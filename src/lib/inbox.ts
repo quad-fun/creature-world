@@ -4,7 +4,9 @@
 import { appraise, impulse, relieve } from "./affect";
 import { checkAll, checkText } from "./filter";
 import { ITEMS, MAX_CREATURES, SPECIES_EMOJI, base } from "./content";
-import { logFeed, remember, touchBond } from "./sim";
+import { customId, giftText, itemDef, matchItemId, normName, touchItem } from "./items";
+import { MAX_CARRY, logFeed, remember, touchBond } from "./sim";
+import { noteExposure, novelty, payoffScale } from "./novelty";
 import type { InboxItem, World } from "./types";
 
 const URL_RE = /(https?:\/\/|www\.)\S+/gi;
@@ -61,6 +63,26 @@ export function applyInbox(w: World, items: InboxItem[]) {
       impulse(c, 0.05 + appraise(c, ITEMS.bread.tags) * 0.3, 0.05);
       remember(w, c, `A visitor named ${from} left me a loaf of bread.`, 0.6);
       logFeed(w, c.id, "move", `${from} (a visitor) leaves a loaf of bread for ${c.sheet.name}.`);
+    } else if (it.type === "gift") {
+      // The item must already be in the registry (appraiseGifts runs first); the raw description is gone by now.
+      const c = w.creatures[it.to];
+      const from = sanitizeName(it.from) || "a visitor";
+      const t = giftText(it.name, it.description, sanitizeName, sanitizeText);
+      if (!c || !t || !checkText(from, { allowEmpty: true }).ok) continue;
+      const id = matchItemId(w, t.name) ?? (w.items[customId(normName(t.name))] ? customId(normName(t.name)) : undefined);
+      if (!id) continue;
+      const d = itemDef(w, id);
+      if (c.inventory.length >= MAX_CARRY) {
+        logFeed(w, c.id, "move", `${from} (a visitor) offers ${c.sheet.name} ${d.name}, but ${c.sheet.name}'s hands are full.`);
+        continue;
+      }
+      c.inventory.push(id);
+      touchItem(w, id);
+      const pm = payoffScale(novelty(c, `item:${id}`, w.t));
+      noteExposure(c, `item:${id}`, w.t);
+      impulse(c, (0.05 + appraise(c, [...d.tags, "gift"]) * 0.3) * pm, 0.05);
+      remember(w, c, `A visitor named ${from} gave me ${d.name}${d.desc ? `: ${d.desc}` : "."}`, 0.6);
+      logFeed(w, c.id, "move", `${from} (a visitor) gives ${c.sheet.name} ${d.name}.`);
     } else if (it.type === "adopt") {
       if (Object.keys(w.creatures).length >= MAX_CREATURES) continue;
       const name = sanitizeName(it.name);
