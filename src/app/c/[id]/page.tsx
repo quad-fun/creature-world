@@ -31,6 +31,28 @@ export default async function CreaturePage({ params }: { params: Promise<{ id: s
         {c.placeName} · {c.activity} · feels {c.feeling} · {c.coins} coins · {c.callsToday} model calls today
       </p>
 
+      <div className="bars">
+        {[
+          ["mood", c.mood],
+          ["energy", c.energy],
+        ].map(([k, v]) => {
+          const x = v as { level: number; word: string };
+          return (
+            <div className="bar" key={k as string}>
+              {k as string}: {x.word}
+              <i>
+                <span className={x.level < 0.3 ? "low" : ""} style={{ width: `${Math.round(x.level * 100)}%` }} />
+              </i>
+            </div>
+          );
+        })}
+      </div>
+      <p className="why">
+        {c.influences.length ? `Influences: ${c.influences.map((i) => `${i.word} (${i.source}), ${i.effect} mood`).join("; ")}` : "No strong influences right now."}
+        {c.interests.length > 0 && ` Interests: ${c.interests.map((i) => `${i.topic} (${i.word})`).join(", ")}.`}
+        {c.pursuit && ` Project: ${c.pursuit.title}, ${c.pursuit.word}.`}
+      </p>
+
       <div className="two">
         <div>
           <h2>Diary</h2>

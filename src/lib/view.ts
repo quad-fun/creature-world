@@ -1,5 +1,6 @@
 // Public, read-only projection of the world for the UI and the open read API.
-import { bondWord, driveWords, moodWords } from "./affect";
+import { activeInfluences, bondWord, energyWord, influenceWord, influenceWords, moodWord, moodWords } from "./affect";
+import { interestWord, pursuitWord } from "./novelty";
 import { ITEMS, MAX_CREATURES, PLACES } from "./content";
 import { config } from "./engine";
 import { MODEL_ID, modelAvailable } from "./mind";
@@ -18,11 +19,19 @@ export function creatureView(w: World, c: Creature) {
     placeName: PLACES[c.place].name,
     activity: describeActivity(w, c),
     feeling: moodWords(c),
-    needs: driveWords(c),
-    drives: c.drives,
-    valence: c.affect.valence,
-    arousal: c.affect.arousal,
-    mood: c.mood,
+    needs: influenceWords(c),
+    mood: { level: c.mood, word: moodWord(c.mood) },
+    energy: { level: c.energy, word: energyWord(c.energy) },
+    influences: activeInfluences(c).map((i) => ({
+      kind: i.kind,
+      label: i.label,
+      word: influenceWord(i),
+      source: i.source,
+      level: i.level,
+      effect: (i.mood < 0 ? "lowers" : "lifts") as "lowers" | "lifts",
+    })),
+    interests: c.interests.filter((i) => i.strength >= 0.15).map((i) => ({ topic: i.topic, word: interestWord(i.strength), strength: i.strength })),
+    pursuit: c.pursuit ? { title: c.pursuit.title, word: pursuitWord(c.pursuit), progress: c.pursuit.progress, steps: c.pursuit.steps, setbacks: c.pursuit.setbacks } : null,
     coins: c.coins,
     inventory: c.inventory.map((i) => ITEMS[i].name),
     source: c.lastSource,

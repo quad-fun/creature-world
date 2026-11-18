@@ -1,5 +1,10 @@
 // Static content: places, items, species and the three starting creatures.
-import type { Creature, DriveName, ItemId, PlaceId, World } from "./types";
+import { ensureNeeds } from "./affect";
+import { seedInterests } from "./novelty";
+import type { Creature, ItemId, PlaceId, World } from "./types";
+
+/** Rise in need-level per world minute while awake (energy: fall in the energy bar). */
+export type Rates = { hunger: number; energy: number; loneliness: number; boredom: number; comfort: number };
 
 export const PLACES: Record<PlaceId, { name: string; x: number; y: number; blurb: string }> = {
   fountain: { name: "the fountain", x: 5, y: 5, blurb: "A market stall sits beside the fountain; the town buys crafted things here." },
@@ -33,42 +38,43 @@ export const SPECIES_EMOJI = { otter: "🦦", magpie: "🐦‍⬛", toad: "🐸"
 
 export const SPECIES = {
   otter: {
-    // satisfaction lost per world minute while awake
-    rates: { food: 0.0012, energy: 0.001, social: 0.0008, curiosity: 0.0007, comfort: 0.0004 } as Record<DriveName, number>,
+        rates: { hunger: 0.0012, energy: 0.001, loneliness: 0.0008, boredom: 0.0007, comfort: 0.0004 } as Rates,
     craft: "mended-thing" as ItemId,
   },
   magpie: {
-    rates: { food: 0.0013, energy: 0.0011, social: 0.0011, curiosity: 0.0013, comfort: 0.0004 } as Record<DriveName, number>,
+    rates: { hunger: 0.0013, energy: 0.0011, loneliness: 0.0011, boredom: 0.0013, comfort: 0.0004 } as Rates,
     craft: "trinket" as ItemId,
   },
   toad: {
-    rates: { food: 0.0009, energy: 0.0008, social: 0.0005, curiosity: 0.0006, comfort: 0.0006 } as Record<DriveName, number>,
+    rates: { hunger: 0.0009, energy: 0.0008, loneliness: 0.0005, boredom: 0.0006, comfort: 0.0006 } as Rates,
     craft: "potion" as ItemId,
   },
 };
-
-function fresh(): Creature["drives"] {
-  return { food: 0.8, energy: 0.9, social: 0.7, curiosity: 0.7, comfort: 0.8 };
-}
 
 export function base(
   id: string,
   species: Creature["species"],
   emoji: string,
   place: PlaceId,
-  baseline: number,
+  baseline: number, // temperament, -1..1 (as in the sheet); stored as a 0..1 mood baseline
   sheet: Creature["sheet"],
 ): Creature {
-  return {
+  const moodBase = 0.5 + baseline / 2;
+  const c: Creature = {
     id,
     species,
     emoji,
     sheet,
     place,
-    drives: fresh(),
-    affect: { valence: baseline, arousal: 0.3 },
-    mood: baseline,
-    baseline,
+    mood: moodBase,
+    energy: 0.9,
+    baseline: moodBase,
+    influences: [],
+    familiarity: {},
+    interests: [],
+    pursuit: null,
+    lastPursuitEndT: -10000,
+    received: [],
     activity: null,
     queue: [],
     inventory: [],
@@ -83,6 +89,9 @@ export function base(
     sleptSinceReflect: false,
     goal: "",
   };
+  ensureNeeds(c);
+  c.interests = seedInterests(c);
+  return c;
 }
 
 export function seedCreatures(): Record<string, Creature> {

@@ -2,7 +2,6 @@
 // All state is plain JSON so it can live in a single Redis key.
 
 export type PlaceId = "fountain" | "workshop" | "bakery" | "pond" | "park" | "nests";
-export type DriveName = "food" | "energy" | "social" | "curiosity" | "comfort";
 export type ItemId = "bread" | "mended-thing" | "trinket" | "potion";
 export type MoveKind =
   | "walk"
@@ -18,8 +17,47 @@ export type MoveKind =
   | "post"
   | "wait";
 
-/** 0..1 per drive. 1 = fully satisfied, 0 = badly unmet (uniform for every drive). */
-export type Drives = Record<DriveName, number>;
+/**
+ * Mood and energy (0..1) are the only core bars. Everything else is a named, temporary Influence
+ * that pushes them. "need" influences (hunger, loneliness, boredom, comfort) always exist and their
+ * level rises with time until relieved (comfort's level is discomfort). The others are events that
+ * appear and then fade with a half-life.
+ */
+export type InfluenceKind = "hunger" | "loneliness" | "boredom" | "comfort" | "accomplishment" | "joy" | "fear";
+export type NeedKind = "hunger" | "loneliness" | "boredom" | "comfort";
+
+export interface Influence {
+  kind: InfluenceKind;
+  label: string; // short noun for the UI, e.g. "hunger"
+  source: string; // what caused it, in plain words
+  level: number; // 0..1 intensity
+  mood: number; // push on mood at level 1 (negative = lowers)
+  energy: number; // push on energy at level 1
+  need: boolean; // need influences persist and grow; others decay with halfLife and are removed when faint
+  halfLife?: number; // world minutes (non-need)
+}
+
+/** Recent exposure to an activity, place or item: n decays with a half-life; used for novelty. */
+export interface Exposure {
+  n: number;
+  t: number;
+}
+
+export interface Interest {
+  topic: string;
+  strength: number; // 0..1, grows with exposure, fades slowly without it
+  t: number; // last exposure
+}
+
+export interface Pursuit {
+  topic: string;
+  title: string;
+  steps: number; // steps needed
+  progress: number;
+  setbacks: number;
+  startedT: number;
+  lastStepT: number;
+}
 
 export interface Move {
   do: MoveKind;
@@ -39,7 +77,7 @@ export interface Activity {
 export interface Memory {
   t: number;
   text: string;
-  valence: number; // affect when it was encoded
+  valence: number; // how the creature felt when it was encoded, -1..1
   salience: number; // 0..1
 }
 
@@ -70,10 +108,15 @@ export interface Creature {
   emoji: string;
   sheet: Sheet;
   place: PlaceId;
-  drives: Drives;
-  affect: { valence: number; arousal: number };
-  mood: number; // slow average of valence
-  baseline: number; // temperament baseline valence
+  mood: number; // 0..1 core bar
+  energy: number; // 0..1 core bar
+  baseline: number; // temperament baseline mood, 0..1
+  influences: Influence[];
+  familiarity: Record<string, Exposure>; // "act:craft", "place:park", "item:trinket", "talk:pip", ...
+  interests: Interest[]; // at most 4
+  pursuit: Pursuit | null;
+  lastPursuitEndT: number;
+  received: { from: string; item: ItemId; t: number }[]; // recent gifts, newest last (max 8)
   activity: Activity | null;
   queue: Move[];
   inventory: ItemId[];

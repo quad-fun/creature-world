@@ -3,9 +3,10 @@
 import { checkText } from "./filter";
 import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
-import { bondWord, driveWords, moodWords } from "./affect";
+import { bondWord, influenceLines, moodWords } from "./affect";
 import { BREAD_PRICE, ITEMS, PLACES, PLACE_IDS, SPECIES, travelMinutes } from "./content";
-import { clockOf, creaturesAt, describeActivity } from "./sim";
+import { clockOf, creaturesAt, describeActivity, MAX_CARRY, POST_COOLDOWN } from "./sim";
+import { interestWord, pursuitWord, staleKeys, stepKindFor } from "./novelty";
 import type { Creature, World } from "./types";
 
 export const MODEL_ID = process.env.CREATURE_MODEL || "anthropic/claude-haiku-5.5";
@@ -79,10 +80,59 @@ function topMemories(w: World, c: Creature, n: number) {
     .map((x) => x.m);
 }
 
+function interestLine(c: Creature): string {
+  const xs = [...c.interests].filter((i) => i.strength >= 0.15).sort((a, b) => b.strength - a.strength);
+  return xs.length ? `Your interests: ${xs.map((i) => `${i.topic} (${interestWord(i.strength)})`).join(", ")}` : "";
+}
+
+function pursuitLine(c: Creature): string {
+  const p = c.pursuit;
+  if (!p) return "";
+  const kind = stepKindFor(p.topic);
+  return `A project you are working on: ${p.title} (${pursuitWord(p)}${p.setbacks ? ", with a setback or two" : ""}). A step forward is ${kind === "craft" ? "crafting" : kind === "speak" ? "talking with someone" : "playing somewhere you enjoy"}. Finishing it would feel wonderful.`;
+}
+
+function staleLine(w: World, c: Creature): string {
+  const stale = staleKeys(c, w.t)
+    .slice(0, 4)
+    .map((k) => {
+      const [kind, what] = k.split(":");
+      const label = what === undefined ? k : what.replace(/-/g, " ");
+      if (kind === "craft") return `crafting ${label}s`;
+      if (kind === "sell") return `selling ${label}s`;
+      if (kind === "play") return `playing at ${PLACES[what as keyof typeof PLACES]?.name ?? label}`;
+      if (kind === "place") return `going to ${PLACES[what as keyof typeof PLACES]?.name ?? label}`;
+      if (kind === "talk") return `chatting with ${w.creatures[what]?.sheet.name ?? label}`;
+      if (kind === "gift") return `giving things to ${w.creatures[what]?.sheet.name ?? label}`;
+      return label;
+    });
+  return stale.length ? `Feels stale lately (you have done it a lot): ${stale.join(", ")}` : "";
+}
+
+function carryNote(c: Creature): string {
+  const counts = new Map<string, number>();
+  for (const i of c.inventory) counts.set(i, (counts.get(i) ?? 0) + 1);
+  const pile = [...counts.entries()].filter(([i, n]) => n >= 3 && ITEMS[i as keyof typeof ITEMS].sell > 0);
+  const full = c.inventory.length >= MAX_CARRY ? ` You cannot carry more than ${MAX_CARRY} things, so you cannot craft until you sell or give something.` : "";
+  return pile.length ? ` You are piling up ${pile.map(([i, n]) => `${n} ${ITEMS[i as keyof typeof ITEMS].name}s`).join(", ")}; they only help once sold at the fountain.${full}` : full;
+}
+
+function recentGifts(w: World, c: Creature): string {
+  const r = c.received.filter((g) => w.t - g.t < 480).map((g) => `${ITEMS[g.item].name} from ${w.creatures[g.from]?.sheet.name ?? "someone"}`);
+  return r.length ? `Given to you lately: ${r.join(", ")}. Passing a gift straight back is not allowed and feels hollow.` : "";
+}
+
+function postNote(w: World, c: Creature): string {
+  const left = c.lastPostT === undefined ? 0 : Math.max(0, POST_COOLDOWN - (w.t - c.lastPostT));
+  return left > 0
+    ? `A creature may post at most once every ${POST_COOLDOWN} world minutes; you posted recently and cannot post for about ${Math.ceil(left / 10) * 10} more minutes, so do not choose post now.`
+    : `A creature may post at most once every ${POST_COOLDOWN} world minutes; you may post now.`;
+}
+
 export function buildDecisionPrompt(w: World, c: Creature): { system: string; prompt: string } {
   const clk = clockOf(w.t);
   const others = creaturesAt(w, c.place, c.id);
-  const needs = driveWords(c);
+  const pulls = influenceLines(c);
   const carry = c.inventory.length ? c.inventory.map((i) => ITEMS[i].name).join(", ") : "nothing";
   const ids = Object.keys(w.creatures).filter((id) => id !== c.id);
   const walkTimes = PLACE_IDS.filter((p) => p !== c.place)
@@ -106,9 +156,13 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
       : "Here with you: nobody",
     `Today in town: ${w.event?.text ?? "nothing special"}`,
     `How you feel: ${moodWords(c)}`,
+    `What is pressing on your mood and energy right now: ${pulls.length ? pulls.join("; ") : "nothing in particular"}`,
+    interestLine(c),
+    pursuitLine(c),
+    staleLine(w, c),
     `Your current intention: ${c.goal || "none yet; choose something you would like to do or become in this town"}`,
-    `Needs: ${needs.length ? needs.join(", ") : "nothing pressing"}`,
-    `You carry: ${carry}. Coins: ${c.coins}.`,
+    `You carry: ${carry}. Coins: ${c.coins}.${carryNote(c)}`,
+    recentGifts(w, c),
     `Walking time from here: ${walkTimes}.`,
     `Bread costs ${BREAD_PRICE} coins at the bakery. Stall prices now: ${prices}.`,
     `Relationships: ${rel}`,
@@ -125,9 +179,10 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `- craft: only at the workshop (you make ${ITEMS[SPECIES[c.species].craft].name})`,
     `- sell: only at the fountain; item is something you carry that can be sold`,
     `- gift: target is someone here; item is something you carry`,
-    `- post: text is a short public notice or postcard for the town board; visitors from outside read it too. Rare: only when you have something worth saying`,
+    `- post: text is a short public notice or postcard for the town board; visitors from outside read it too. Rare: only when you have something worth saying. ${postNote(w, c)}`,
     `- rest, play (park, pond or fountain), wait`,
     `- sleep: only at the nests`,
+    `Doing the same thing again and again pays less and makes you bored; something new lifts your mood and eases boredom. Mixing it up (a new place, a new person, a different activity) is healthy.`,
     `Also set goal if your intention has changed (a few words), otherwise null.`,
   ];
   return { system: persona(c), prompt: lines.filter((l) => l !== "").join("\n") };

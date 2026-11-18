@@ -1,7 +1,7 @@
 // What the outside world can do to the town: leave a note, give a treat, adopt a creature.
 // Everything is sanitised here, applied by the tick engine under its lock, and visible in the feed.
 // Nothing from outside can touch a creature's drives, sheet or locked lines directly.
-import { appraise, impulse } from "./affect";
+import { appraise, impulse, relieve } from "./affect";
 import { checkAll, checkText } from "./filter";
 import { ITEMS, MAX_CREATURES, SPECIES_EMOJI, base } from "./content";
 import { logFeed, remember, touchBond } from "./sim";
@@ -48,8 +48,8 @@ export function applyInbox(w: World, items: InboxItem[]) {
       if (!c || !text || !checkText(text).ok) continue;
       c.heard.push({ t: w.t, from: `${from} (a visitor)`, text });
       if (c.heard.length > 6) c.heard.shift();
-      impulse(c, 0.06 + appraise(c, [], text) * 0.5, 0.1);
-      c.drives.social = Math.min(1, c.drives.social + 0.1);
+      impulse(c, 0.03 + appraise(c, [], text) * 0.3, 0.05);
+      relieve(c, "loneliness", 0.1);
       remember(w, c, `A visitor named ${from} told me: “${text}”`, 0.55);
       pushBoard(w, from, "visitor", text, c.sheet.name);
       logFeed(w, c.id, "say", `${from} (a visitor) leaves a note for ${c.sheet.name}: “${text}”`);
@@ -58,7 +58,7 @@ export function applyInbox(w: World, items: InboxItem[]) {
       const from = sanitizeName(it.from) || "a visitor";
       if (!c) continue;
       if (c.inventory.length < 5) c.inventory.push("bread");
-      impulse(c, 0.12 + appraise(c, ITEMS.bread.tags) * 0.5, 0.1);
+      impulse(c, 0.05 + appraise(c, ITEMS.bread.tags) * 0.3, 0.05);
       remember(w, c, `A visitor named ${from} left me a loaf of bread.`, 0.6);
       logFeed(w, c.id, "move", `${from} (a visitor) leaves a loaf of bread for ${c.sheet.name}.`);
     } else if (it.type === "adopt") {

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PublicWorld } from "@/lib/view";
 
-const DRIVE_LABELS: Record<string, string> = { food: "food", energy: "energy", social: "company", curiosity: "interest", comfort: "comfort" };
 const ORDER = ["workshop", "fountain", "bakery", "nests", "park", "pond"];
 
 function stamp(t: number) {
@@ -141,15 +140,33 @@ export function Town({ initial }: { initial: PublicWorld }) {
               <span>{c.inventory.length ? c.inventory.join(", ") : "nothing"} · {c.coins} coins</span>
             </div>
             <div className="bars">
-              {Object.entries(c.drives).map(([k, v]) => (
-                <div className="bar" key={k}>
-                  {DRIVE_LABELS[k]}
-                  <i>
-                    <span className={v < 0.3 ? "low" : ""} style={{ width: `${Math.round(v * 100)}%` }} />
-                  </i>
-                </div>
-              ))}
+              {[
+                ["mood", c.mood],
+                ["energy", c.energy],
+              ].map(([k, v]) => {
+                const x = v as { level: number; word: string };
+                return (
+                  <div className="bar" key={k as string}>
+                    {k as string}
+                    <i>
+                      <span className={x.level < 0.3 ? "low" : ""} style={{ width: `${Math.round(x.level * 100)}%` }} />
+                    </i>
+                  </div>
+                );
+              })}
             </div>
+            {c.influences.length > 0 && (
+              <div className="row">
+                <span>Influences</span>
+                <span>{c.influences.map((i) => `${i.word} (${i.source})`).join(" · ")}</span>
+              </div>
+            )}
+            {c.pursuit && (
+              <div className="row">
+                <span>Project</span>
+                <span>{c.pursuit.title} · {c.pursuit.word}</span>
+              </div>
+            )}
             <div className="row">
               <span>Friends</span>
               <span>{c.bonds.map((b) => `${b.name}: ${b.word}`).join(" · ")}</span>

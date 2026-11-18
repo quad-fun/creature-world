@@ -2,6 +2,7 @@
 // Usage: npx tsx scripts/simulate.ts [days]
 import { seedWorld } from "../src/lib/content";
 import { applyRulesForTest } from "../test/helpers";
+import { needLevel } from "../src/lib/affect";
 import { clockOf, stepWorld } from "../src/lib/sim";
 
 const days = Number(process.argv[2] ?? 5);
@@ -15,15 +16,15 @@ for (let i = 0; i < days * stepsPerDay; i++) {
   const need = stepWorld(w);
   for (const id of need) applyRulesForTest(w, w.creatures[id]);
   for (const c of Object.values(w.creatures)) {
-    minFood = Math.min(minFood, c.drives.food);
-    if (c.drives.food <= 0.01) starvedSteps++;
+    minFood = Math.min(minFood, 1 - needLevel(c, "hunger"));
+    if (needLevel(c, "hunger") >= 0.99) starvedSteps++;
     const k = c.activity?.kind ?? "idle";
     (kinds[c.id] ??= {})[k] = (kinds[c.id][k] ?? 0) + 1;
   }
   if (i % (stepsPerDay / 4) === 0) {
     const clk = clockOf(w.t);
     const line = Object.values(w.creatures)
-      .map((c) => `${c.sheet.name}@${c.place}[${c.activity?.kind ?? "idle"}] v=${c.affect.valence.toFixed(2)} f=${c.drives.food.toFixed(2)} e=${c.drives.energy.toFixed(2)} s=${c.drives.social.toFixed(2)} $${c.coins}`)
+      .map((c) => `${c.sheet.name}@${c.place}[${c.activity?.kind ?? "idle"}] mood=${c.mood.toFixed(2)} en=${c.energy.toFixed(2)} hun=${needLevel(c, "hunger").toFixed(2)} lon=${needLevel(c, "loneliness").toFixed(2)} bor=${needLevel(c, "boredom").toFixed(2)} $${c.coins}`)
       .join(" | ");
     console.log(`D${clk.day} ${clk.label}  ${line}`);
   }
