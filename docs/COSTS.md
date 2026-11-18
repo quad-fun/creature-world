@@ -41,3 +41,6 @@ A realistic day is far lower: creatures only decide when idle, sleep through the
 ## Not model cost, but worth knowing
 - `extra_daily_calls` is sold as a credits ticket but nothing redeems it yet. When it is wired in it must raise one creature's cap by a fixed, small number and still be bounded (no unlimited purchases per day).
 - Redis: each page view, API read and visitor post does a full-world `GET`; rate-limit counters add one `INCR` per call. This is request volume, not model spend.
+
+## Shops
+`open_shop` adds no model call: it is one more move in the normal decision, so the per-creature daily cap still bounds everything. The prompt grows by about 150 tokens per decision (a rough extra of 6 x 200 x 150 = 180k input tokens a day at the cap, about $0.02 at the default prices). Visitor coins are not money: at most 60 in-world coins a day enter the town (see docs/SHOPS.md).

@@ -6,7 +6,42 @@ import { BERRY_MAX } from "./goods";
 import { PLACE_IDS } from "./content";
 import { checkText } from "./filter";
 import { validOutside } from "./outside";
-import type { Build, Creature, World } from "./types";
+import { MAX_LISTINGS, OPEN_EXPIRES, PRICE_MAX, PRICE_MIN, RECEIPTS_KEPT, SHOP_PENDING_LIFETIME, cleanShopText, isSellable, isToken, SHOP_TAGLINE_MAX, SHOP_TITLE_MAX } from "./shops";
+import type { Build, Creature, Listing, Shop, World } from "./types";
+
+/** A stored shop is rebuilt field by field: bad text or listings are dropped, a hopeless shop becomes null. */
+function cleanShop(raw: unknown, now: number): Shop | null {
+  const x = raw as Shop;
+  if (!x || typeof x !== "object") return null;
+  const title = cleanShopText(x.title, SHOP_TITLE_MAX);
+  const tagline = cleanShopText(x.tagline, SHOP_TAGLINE_MAX);
+  if (!title || !tagline || (x.status !== "pending" && x.status !== "open")) return null;
+  const seen = new Set<number>();
+  const listings: Listing[] = [];
+  for (const l of Array.isArray(x.listings) ? x.listings.slice(0, MAX_LISTINGS) : []) {
+    if (!l || typeof l !== "object" || !Number.isInteger(l.id) || seen.has(l.id) || !Number.isInteger(l.price) || l.price < PRICE_MIN || l.price > PRICE_MAX) continue;
+    if ((l.item === undefined) === (l.work === undefined)) continue;
+    if (l.item !== undefined && !isSellable(l.item)) continue;
+    if (l.work !== undefined && !(Number.isInteger(l.work) && l.work > 0)) continue;
+    seen.add(l.id);
+    listings.push(l.item !== undefined ? { id: l.id, item: l.item, price: l.price } : { id: l.id, work: l.work, price: l.price });
+  }
+  const d = x.draft && typeof x.draft === "object" ? { title: cleanShopText(x.draft.title, SHOP_TITLE_MAX), tagline: cleanShopText(x.draft.tagline, SHOP_TAGLINE_MAX), expiresT: x.draft.expiresT } : null;
+  const finite = (n: unknown, d: number) => (typeof n === "number" && Number.isFinite(n) ? n : d);
+  return {
+    title,
+    tagline,
+    status: x.status,
+    listings,
+    listingSeq: Math.max(finite(x.listingSeq, 0), ...listings.map((l) => l.id)),
+    createdT: finite(x.createdT, now),
+    expiresT: x.status === "open" ? OPEN_EXPIRES : Math.min(finite(x.expiresT, now + SHOP_PENDING_LIFETIME), now + SHOP_PENDING_LIFETIME),
+    paid: Math.min(10, Math.max(0, Math.floor(finite(x.paid, 0)))),
+    ...(d && d.title && d.tagline && x.status === "open" ? { draft: { title: d.title, tagline: d.tagline, expiresT: Math.min(finite(d.expiresT, now), now + SHOP_PENDING_LIFETIME) } } : {}),
+    sales: x.sales && typeof x.sales.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.sales.day) && Number.isInteger(x.sales.n) && x.sales.n >= 0 ? { day: x.sales.day, n: x.sales.n } : { day: "", n: 0 },
+    sold: Math.max(0, Math.floor(finite(x.sold, 0))),
+  };
+}
 
 /** A stored build must fit the schema exactly; anything else (hand-edited or corrupt data) is dropped on load. */
 function validBuild(b: unknown): b is Build {
@@ -48,6 +83,10 @@ export function migrate(w: World): World {
   w.postcardSeq = Math.max(typeof w.postcardSeq === "number" && Number.isFinite(w.postcardSeq) ? w.postcardSeq : 0, ...w.postcards.map((p) => p.id));
   w.bookRequests = Array.isArray(w.bookRequests) ? w.bookRequests.filter(validReq).slice(-12) : [];
   w.bookSeq = Math.max(typeof w.bookSeq === "number" && Number.isFinite(w.bookSeq) ? w.bookSeq : 0, ...w.bookRequests.map((r) => r.id));
+  w.receipts = Array.isArray(w.receipts)
+    ? w.receipts.filter((r) => !!r && typeof r === "object" && isToken(r.token) && typeof r.ok === "boolean" && Number.isFinite(r.ts) && okLine(r.text, 200)).slice(-RECEIPTS_KEPT)
+    : [];
+  w.shopDay = w.shopDay && typeof w.shopDay.day === "string" && Number.isInteger(w.shopDay.n) && Number.isInteger(w.shopDay.coins) && w.shopDay.n >= 0 && w.shopDay.coins >= 0 ? w.shopDay : { day: "", n: 0, coins: 0 };
   w.appraisals ??= { day: "", n: 0 };
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
@@ -58,6 +97,8 @@ export function migrate(w: World): World {
     c.makes ??= { day: 0, n: 0 };
     c.gathers = c.gathers && Number.isFinite(c.gathers.day) && Number.isFinite(c.gathers.n) ? c.gathers : { day: 0, n: 0 };
     c.site ??= null;
+    c.shop = cleanShop(c.shop, w.t);
+    c.shopDay = Number.isFinite(c.shopDay) ? c.shopDay : 0;
     c.buildsMade ??= { day: 0, n: 0 };
     c.reads ??= { day: 0, n: 0 };
     c.cards ??= { day: 0, n: 0 };

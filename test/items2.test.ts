@@ -520,7 +520,7 @@ test("hostile model output: nonexistent items, wrong places and prototype keys n
   // a model that returns these through decideWithModel is held to the same validation
   const model = new MockLanguageModelV4({
     doGenerate: async () => ({
-      content: [{ type: "text", text: JSON.stringify({ moves: [{ do: "craft", place: null, target: null, item: "teapot", kind: null, title: null, topic: null, build: null, n: null, text: null, why: "I want a teapot" }], goal: null }) }],
+      content: [{ type: "text", text: JSON.stringify({ moves: [{ do: "craft", place: null, target: null, item: "teapot", kind: null, title: null, topic: null, build: null, listings: null, n: null, text: null, why: "I want a teapot" }], goal: null }) }],
       finishReason: { unified: "stop", raw: "stop" },
       usage: { inputTokens: { total: 10, noCache: 10 }, outputTokens: { total: 10, text: 10 } },
       warnings: [],

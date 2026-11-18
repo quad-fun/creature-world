@@ -40,6 +40,7 @@ export type MoveKind =
   | "give_work"
   | "buy_slot"
   | "launch_site"
+  | "open_shop"
   | "propose_build"
   | "read_book"
   | "request_book"
@@ -80,6 +81,35 @@ export interface Work {
   by: string; // id of the creature that made it
   from?: string; // id of the creature that gave it to this shelf
 }
+/** One thing on sale: a held item (consumed by a sale) or a work on the shelf (never consumed), at an in-world price. */
+export interface Listing {
+  id: number; // unique within the shop, never reused
+  item?: ItemId;
+  work?: number;
+  price: number; // integer coins, 1..50
+}
+/** A creature's shop on its site. Pure data; text passed cleanShopText. Invisible until a human approves it. */
+export interface Shop {
+  title: string;
+  tagline: string;
+  status: "pending" | "open";
+  listings: Listing[];
+  listingSeq: number;
+  createdT: number;
+  expiresT: number; // pending: lapses at this world minute
+  paid: number; // coins held while pending (refunded if it never opens)
+  draft?: { title: string; tagline: string; expiresT: number }; // edited text of an open shop, waiting for a human
+  sales: { day: string; n: number }; // real UTC day, sales that day
+  sold: number; // lifetime sales
+}
+/** What a visitor sees after buying (or failing to). Text is built from checked words only. */
+export interface Receipt {
+  token: string;
+  ok: boolean;
+  text: string;
+  ts: number;
+}
+
 export interface Site {
   title: string;
   tagline: string;
@@ -139,6 +169,7 @@ export interface Move {
   title?: string; // make / launch_site
   topic?: string; // make: optional subject
   n?: number; // discard / give_work: work number
+  listings?: { item?: string; work?: number; price: number }[]; // open_shop: what to put on sale (validated in shops.ts)
   paint?: boolean; // set only by the engine when a drawing is made with a paint set; never from model output
   piece?: { title: string; body: string; shapes?: Shape[] }; // set only by the engine after writing; never from model output
   text?: string; // speak
@@ -217,6 +248,8 @@ export interface Creature {
   buildsMade: { day: number; n: number }; // build proposals on this world day
   gathers: { day: number; n: number }; // berry gatherings on this world day
   site: Site | null;
+  shop: Shop | null;
+  shopDay: number; // world day of the last open_shop or relist (1 a day)
   reads: { day: number; n: number }; // books read on this world day
   booksRead: string[]; // recent book ids, newest last (max 12)
   cards: { day: number; n: number }; // postcards sent on this world day
@@ -262,6 +295,7 @@ export type InboxItem =
   | { type: "treat"; to: string; from: string }
   | { type: "gift"; to: string; from: string; name: string; description: string }
   | { type: "postcard"; to: string; from: string; where: string; text: string }
+  | { type: "purchase"; creature: string; listing: number; paid: number; token: string; vkey: string }
   | {
       type: "adopt";
       name: string;
@@ -338,5 +372,7 @@ export interface World {
   postcardSeq: number;
   bookRequests: BookRequest[]; // capped
   bookSeq: number;
+  receipts: Receipt[]; // newest last, capped (shops.ts)
+  shopDay: { day: string; n: number; coins: number }; // visitor purchases applied today (real UTC day)
   event?: { day: number; name: string; text: string };
 }

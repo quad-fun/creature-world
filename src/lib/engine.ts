@@ -187,7 +187,13 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
       } catch (e) {
         console.error("appraisal failed", (e as Error)?.message); // never lose the rest of the batch or the tick
       }
-      applyInbox(world, inbox);
+      for (const r of applyInbox(world, inbox)) {
+        try {
+          await store.kv.incrby(r.key, -r.coins); // a failed purchase gives the visitor's reserved coins back
+        } catch (e) {
+          console.error("visitor coin refund failed", (e as Error)?.message);
+        }
+      }
     }
     await refreshOutside(world, store.kv); // weather and date: seeded, or one cached, timed-out, silent-on-failure live read
     const now = Date.now();

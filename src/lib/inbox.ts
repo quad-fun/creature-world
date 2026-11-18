@@ -8,6 +8,7 @@ import { customId, giftText, itemDef, matchItemId, normName, touchItem } from ".
 import { MAX_CARRY, logFeed, remember, touchBond } from "./sim";
 import { noteExposure, novelty, payoffScale } from "./novelty";
 import { own } from "./own";
+import { applyPurchase, type Refund } from "./shops";
 import type { InboxItem, World } from "./types";
 
 const URL_RE = /(https?:\/\/|www\.)\S+/gi;
@@ -45,14 +46,19 @@ function pushBoard(w: World, by: string, byKind: "creature" | "visitor", text: s
 }
 
 /** Apply a drained batch. One malformed item (whatever is in Redis) is skipped; it never stops the rest or the tick. */
-export function applyInbox(w: World, items: InboxItem[]) {
+export function applyInbox(w: World, items: InboxItem[]): Refund[] {
+  const refunds: Refund[] = [];
   for (const it of items) {
     try {
-      applyOne(w, it);
+      if (it && typeof it === "object" && it.type === "purchase") {
+        const r = applyPurchase(w, it);
+        if (r) refunds.push(r);
+      } else applyOne(w, it);
     } catch (e) {
       console.error("inbox item skipped", (e as Error)?.message);
     }
   }
+  return refunds; // visitor coins to give back (failed purchases); the engine returns them to the allowance
 }
 
 function applyOne(w: World, it: InboxItem) {
