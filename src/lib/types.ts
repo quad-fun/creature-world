@@ -323,10 +323,10 @@ export interface BoardEntry {
 
 /** Things the outside world drops off. Applied to the world by the tick engine, under its lock. */
 export type InboxItem =
-  | { type: "note"; to: string; from: string; text: string }
+  | { type: "note"; to: string; from: string; text: string; via?: "agent" }
   | { type: "treat"; to: string; from: string }
   | { type: "gift"; to: string; from: string; name: string; description: string }
-  | { type: "postcard"; to: string; from: string; where: string; text: string }
+  | { type: "postcard"; to: string; from: string; where: string; text: string; via?: "agent" }
   | { type: "creation_play"; id: number; token: string; score?: number; of?: number }
   | { type: "purchase"; creature: string; listing: number; paid: number; token: string; vkey: string }
   | {

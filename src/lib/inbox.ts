@@ -63,35 +63,46 @@ export function applyInbox(w: World, items: InboxItem[]): Refund[] {
   return refunds; // visitor coins to give back (failed purchases); the engine returns them to the allowance
 }
 
+/** How a note or postcard sender shows up. Agent sends (via "agent") are always labelled "an AI visitor". */
+function visitorWho(it: { from: string; via?: "agent" }): { from: string; tag: string; said: string } {
+  const label = sanitizeName(it.from);
+  if (it.via === "agent") {
+    return { from: label || "an AI visitor", tag: label ? `${label} (an AI visitor)` : "an AI visitor", said: label ? `An AI visitor named ${label}` : "An AI visitor" };
+  }
+  const from = label || "a visitor";
+  return { from, tag: `${from} (a visitor)`, said: `A visitor named ${from}` };
+}
+
 function applyOne(w: World, it: InboxItem) {
   {
     if (!it || typeof it !== "object") return;
     if (it.type === "note") {
       const c = own(w.creatures, it.to);
-      const from = sanitizeName(it.from) || "a visitor";
+      const { from, tag, said } = visitorWho(it);
       const text = sanitizeText(it.text, 200);
       if (!c || !text || !checkText(text).ok || !checkText(from, { allowEmpty: true }).ok) return;
-      c.heard.push({ t: w.t, from: `${from} (a visitor)`, text });
+      c.heard.push({ t: w.t, from: tag, text });
       if (c.heard.length > 6) c.heard.shift();
       impulse(c, 0.03 + appraise(c, [], text) * 0.3, 0.05);
       relieve(c, "loneliness", 0.1);
-      remember(w, c, `A visitor named ${from} told me: “${text}”`, 0.55);
-      pushBoard(w, from, "visitor", text, c.sheet.name);
-      logFeed(w, c.id, "say", `${from} (a visitor) leaves a note for ${c.sheet.name}: “${text}”`);
+      remember(w, c, `${said} told me: “${text}”`, 0.55);
+      pushBoard(w, it.via === "agent" ? tag : from, "visitor", text, c.sheet.name);
+      logFeed(w, c.id, "say", `${tag} leaves a note for ${c.sheet.name}: “${text}”`);
     } else if (it.type === "postcard") {
       // A "postcard from elsewhere": a note with a place of origin. Same filters; shown to the creature as labelled speech.
       const c = own(w.creatures, it.to);
-      const from = sanitizeName(it.from) || "a visitor";
+      const { from, tag } = visitorWho(it);
+      const ai = it.via === "agent";
       const where = sanitizeName(it.where, 24);
       const text = sanitizeText(it.text, 200);
       if (!c || !text || !where || !checkText(text).ok || !checkText(where).ok || !checkText(from, { allowEmpty: true }).ok) return;
-      c.heard.push({ t: w.t, from: `${from} (a postcard from ${where})`, text });
+      c.heard.push({ t: w.t, from: ai ? `${tag}, a postcard from ${where}` : `${from} (a postcard from ${where})`, text });
       if (c.heard.length > 6) c.heard.shift();
       impulse(c, 0.04 + appraise(c, [], text) * 0.3, 0.05);
       relieve(c, "loneliness", 0.12);
-      remember(w, c, `A postcard came from ${where}, signed ${from}: “${text}”`, 0.6);
-      pushBoard(w, from, "visitor", `(postcard from ${where}) ${text}`, c.sheet.name);
-      logFeed(w, c.id, "say", `A postcard from ${where} (${from}) arrives for ${c.sheet.name}: “${text}”`);
+      remember(w, c, `A postcard came from ${where}, signed ${ai ? tag : from}: “${text}”`, 0.6);
+      pushBoard(w, ai ? tag : from, "visitor", `(postcard from ${where}) ${text}`, c.sheet.name);
+      logFeed(w, c.id, "say", `A postcard from ${where} (${ai ? tag : from}) arrives for ${c.sheet.name}: “${text}”`);
     } else if (it.type === "treat") {
       const c = own(w.creatures, it.to);
       const from = sanitizeName(it.from) || "a visitor";

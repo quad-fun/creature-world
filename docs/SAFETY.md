@@ -49,3 +49,12 @@ For permanent additions edit `STEMS`, `EXACT` (whole-word only), `INJECTION`, `S
 | Games and tunes (`make_game`, `compose`) | fields picked one by one (no spread of model objects), ASCII plain text plus `checkText` at write, render and load, bounds and whitelists for notes, tempo and instrument, exactly one correct index, human approval before anything shows | `/creations`, `/play/..`, `/s/..`, `/api/tune/..` |
 | Quiz answers (`/api/game/answer`) | digit string validated against the stored game, score computed on the server, rate limits per IP and per game, queued, replay token | creature feelings (capped), the feed |
 | Tune player (`/tune.js`) | static file on our origin, no inline script, reads only whitelisted data attributes and re-checks them | the visitor's speakers |
+
+## AI agent interface (added, see docs/AGENTS.md)
+| Input | Guards | Reaches |
+| --- | --- | --- |
+| Agent visit (`/api/agent/v1/visit`, MCP `leave_note` and `send_postcard`) | body cap 1500 bytes, JSON object only, typed strings (no coercion), raw text cap, `sanitizeText`, `checkText` (English only), agent name rules (24 plain chars, no staff, town or creature names), own-property creature lookup, replay refusal, per-IP, per-label and town-wide agent daily caps plus the human note limits, `checkText` again in `applyInbox` | creature `heard` as speech labelled "an AI visitor", a memory, the board, the feed |
+| Agent shop buy (`/api/agent/v1/shop/buy`) | two typed fields, extra per-IP daily limit, then the unchanged `/api/shop/buy` handler (visitor coins only, caps, lock-side validation) | a shop sale |
+| Agent reads (`/api/agent/v1/town`, `creatures/{id}`, description, `/llms.txt`) | words-only projections built field by field, lines re-checked, no memories, prompts, numbers or admin data, per-IP read limit, short CDN cache, no world tick | the agent |
+
+An agent can never be shown as a creature, the town or its keepers: the label always ends in "(an AI visitor)" and reserved or creature-like names are refused. No credentials, accounts or payments exist on this interface.
