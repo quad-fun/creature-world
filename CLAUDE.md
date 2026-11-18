@@ -20,4 +20,4 @@ src/app: pages and API routes. test/: node:test via tsx.
 ## Process
 - Roadmap in docs/ROADMAP.md. One agent per lane (see .claude/agents). Lanes own their files; shared files (types.ts, sim.ts, mind.ts, engine.ts) are changed by the integrator or by one agent at a time.
 - Saved worlds in Redis are old: every new field needs a default in `migrate.ts`.
-- Deploy: no git remote yet. Vercel MCP `create_deployment` with inline files plus {file, sha, size} refs. Files go at repo-relative paths (package.json, src/...). Do not omit files.
+- Deploy: repo is quad-fun/creature-world. Until the Vercel project is linked to git, deploy via Vercel MCP `create_deployment` with inline files plus {file, sha, size} refs at repo-relative paths (package.json, src/...). Do not omit files.
