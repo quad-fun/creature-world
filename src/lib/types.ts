@@ -40,6 +40,9 @@ export type MoveKind =
   | "buy_slot"
   | "launch_site"
   | "propose_build"
+  | "read_book"
+  | "request_book"
+  | "send_postcard"
   | "wait";
 
 /** What a creature may propose to build. A fixed catalog (builder.ts); nothing else is buildable. */
@@ -131,6 +134,7 @@ export interface Move {
   item?: ItemId; // eat / sell / gift / use
   kind?: WorkKind; // make
   build?: BuildKind; // propose_build (text is an optional label)
+  book?: string; // read_book: a book id from the curated library (books.ts); request_book uses title
   title?: string; // make / launch_site
   topic?: string; // make: optional subject
   n?: number; // discard / give_work: work number
@@ -208,6 +212,10 @@ export interface Creature {
   makes: { day: number; n: number }; // works started on this world day
   buildsMade: { day: number; n: number }; // build proposals on this world day
   site: Site | null;
+  reads: { day: number; n: number }; // books read on this world day
+  booksRead: string[]; // recent book ids, newest last (max 12)
+  cards: { day: number; n: number }; // postcards sent on this world day
+  bookReqDay: number; // world day of the last book request (0 = never)
   lastPostT?: number; // world minute of the last notice pinned to the board
 }
 
@@ -248,6 +256,7 @@ export type InboxItem =
   | { type: "note"; to: string; from: string; text: string }
   | { type: "treat"; to: string; from: string }
   | { type: "gift"; to: string; from: string; name: string; description: string }
+  | { type: "postcard"; to: string; from: string; where: string; text: string }
   | {
       type: "adopt";
       name: string;
@@ -257,6 +266,40 @@ export type InboxItem =
       dislikes: string[];
       voice: string;
     };
+
+/** The world outside the town: a whitelisted weather condition and calendar facts. Pure data, never free text. */
+export type Weather = "clear" | "rain" | "snow" | "wind" | "hot" | "cold" | "fog";
+export type Season = "spring" | "summer" | "autumn" | "winter";
+export interface Outside {
+  date: string; // YYYY-MM-DD the facts are for
+  weather: Weather;
+  season: Season;
+  holiday: string | null; // a label from our own fixed list (outside.ts), never from the network
+  source: "seeded" | "live"; // live = the optional weather API answered
+  by: "world" | "engine"; // who set it: the engine (real date) or stepWorld's own seeded fallback
+  appliedDay: number; // world day whose mood nudges were already applied
+}
+
+/** A short, filtered public message a creature sends out of town. Outgoing only: no address, no recipient. */
+export interface Postcard {
+  id: number;
+  t: number;
+  ts: number;
+  by: string; // creature id
+  name: string; // creature name at the time
+  species: Creature["species"];
+  place: PlaceId;
+  text: string; // at most 140 chars, passed checkText
+}
+
+/** A creature's wish for a book. Title only, filtered. A human decides; nothing is ever fetched. */
+export interface BookRequest {
+  id: number;
+  title: string;
+  by: string;
+  t: number;
+  status: "pending" | "approved";
+}
 
 export interface World {
   version: 1;
@@ -275,5 +318,10 @@ export interface World {
   boardSeq: number;
   builds: Build[]; // pending and active, bounded by builder.ts caps
   buildSeq: number;
+  outside?: Outside;
+  postcards: Postcard[]; // newest last, capped
+  postcardSeq: number;
+  bookRequests: BookRequest[]; // capped
+  bookSeq: number;
   event?: { day: number; name: string; text: string };
 }

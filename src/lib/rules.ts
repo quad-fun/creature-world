@@ -7,6 +7,8 @@ import { BREAD_PRICE, SPECIES } from "./content";
 import { familiarity, interestStrength, noteExposure, novelty, payoffScale, stepKindFor, topicOf } from "./novelty";
 import { itemDef } from "./items";
 import { ruleBuildOption } from "./builder";
+import { ruleReadOption } from "./books";
+import { cardLines, cardsToday, checkPostcardMove } from "./postcards";
 import { ruleLibraryOptions } from "./library";
 import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand } from "./sim";
 import type { Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
@@ -118,11 +120,22 @@ export function ruleMoves(w: World, c: Creature): Move[] {
   const build = ruleBuildOption(w, c);
   if (build) add("propose_build", build.want, build.moves, build.key);
 
+  const read = ruleReadOption(w, c);
+  if (read) add("read_book", read.want * (0.8 + bored), read.moves, read.key);
+  if (cardsToday(w, c) === 0 && c.energy > 0.3) {
+    const line = [...cardLines(c)].sort((a, b) => familiarity(c, `card:${a}`, w.t) - familiarity(c, `card:${b}`, w.t))[0];
+    const move: Move = { do: "send_postcard", text: line, why: "I would like to tell someone far away how things are." };
+    if (!checkPostcardMove(w, c, move)) {
+      add("send_postcard", 0.2 + 0.25 * lonely, [move], `card:${line}`);
+    }
+  }
+
   if (c.energy < 0.7) add("rest", (1 - c.energy) * 0.5, [{ do: "rest", why: "Taking it slowly." }]);
 
   plans.sort((a, b) => b.score - a.score);
   const best = plans[0];
   if (!best || best.score < 0.15) return [{ do: c.energy < 0.6 ? "rest" : "wait", why: "Nothing calls to me right now." }];
   for (const m of best.moves) if (m.do === "speak" && m.text) noteExposure(c, `say:${m.text}`, w.t);
+  for (const m of best.moves) if (m.do === "send_postcard" && m.text) noteExposure(c, `card:${m.text}`, w.t);
   return best.moves;
 }

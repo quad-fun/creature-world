@@ -7,6 +7,8 @@ import { config } from "./engine";
 import { MODEL_ID, modelAvailable } from "./mind";
 import { MAX_SLOTS, slotPrice } from "./library";
 import { publicBuilds, pendingBuilds } from "./builder";
+import { outsideLine } from "./outside";
+import { publicPostcards } from "./postcards";
 import { clockOf, describeActivity } from "./sim";
 import type { Creature, World } from "./types";
 
@@ -69,6 +71,8 @@ export function publicView(w: World, storage: "redis" | "memory") {
     feed: w.feed.slice(-80),
     board: [...w.board].reverse().slice(0, 20),
     event: w.event?.text ?? null,
+    outside: outsideLine(w.outside) || null,
+    postcards: publicPostcards(w, 3).map((p) => ({ id: p.id, name: p.name, text: p.text })),
     maxCreatures: MAX_CREATURES,
     stats: {
       mode: modelAvailable() ? ("model" as const) : ("rules" as const),

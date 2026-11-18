@@ -6,6 +6,7 @@ import { ruleMoves } from "./rules";
 import { seedWorld } from "./content";
 import { prepareMakes } from "./library";
 import { applyInbox } from "./inbox";
+import { refreshOutside } from "./outside";
 import { appraiseGifts } from "./appraise";
 import { cleanLine } from "./library";
 import { STEP, kickQueue, logFeed, needsDecision, stepWorld, validateMoves } from "./sim";
@@ -150,6 +151,7 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
       }
       applyInbox(world, inbox);
     }
+    await refreshOutside(world, store.kv); // weather and date: seeded, or one cached, timed-out, silent-on-failure live read
     const now = Date.now();
     let steps = Math.floor((((now - world.lastRealMs) / 60_000) * cfg.timeScale) / STEP);
     if (steps < 1) {

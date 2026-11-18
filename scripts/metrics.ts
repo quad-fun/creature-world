@@ -49,3 +49,4 @@ for (const [id, p] of Object.entries(per)) {
 console.log(`ALL distinct activities per creature-day: ${(totalDistinct / totalDays).toFixed(2)}`);
 for (const c of Object.values(w.creatures) as any[]) console.log(`${c.id.padEnd(8)} coins ${c.coins} | shelf ${c.shelf?.length ?? 0}/${c.shelfSlots ?? 0} (works made ${c.workSeq ?? 0}) | site ${c.site ? c.site.title : "none"}`);
 console.log(`builds standing ${(w.builds ?? []).length} (total ever ${w.buildSeq ?? 0}), pending ${(w.builds ?? []).filter((b: any) => b.status === "pending").length}`);
+console.log(`postcards sent ${(w as any).postcardSeq ?? 0} (kept ${(w as any).postcards?.length ?? 0}); books read ${Object.values(w.creatures).map((c: any) => `${c.id}:${(c.booksRead ?? []).length} distinct`).join(", ")}; book requests ${(w as any).bookRequests?.length ?? 0}; weather ${(w as any).outside?.weather ?? "n/a"}`);

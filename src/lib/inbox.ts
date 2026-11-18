@@ -70,6 +70,20 @@ function applyOne(w: World, it: InboxItem) {
       remember(w, c, `A visitor named ${from} told me: “${text}”`, 0.55);
       pushBoard(w, from, "visitor", text, c.sheet.name);
       logFeed(w, c.id, "say", `${from} (a visitor) leaves a note for ${c.sheet.name}: “${text}”`);
+    } else if (it.type === "postcard") {
+      // A "postcard from elsewhere": a note with a place of origin. Same filters; shown to the creature as labelled speech.
+      const c = own(w.creatures, it.to);
+      const from = sanitizeName(it.from) || "a visitor";
+      const where = sanitizeName(it.where, 24);
+      const text = sanitizeText(it.text, 200);
+      if (!c || !text || !where || !checkText(text).ok || !checkText(where).ok || !checkText(from, { allowEmpty: true }).ok) return;
+      c.heard.push({ t: w.t, from: `${from} (a postcard from ${where})`, text });
+      if (c.heard.length > 6) c.heard.shift();
+      impulse(c, 0.04 + appraise(c, [], text) * 0.3, 0.05);
+      relieve(c, "loneliness", 0.12);
+      remember(w, c, `A postcard came from ${where}, signed ${from}: “${text}”`, 0.6);
+      pushBoard(w, from, "visitor", `(postcard from ${where}) ${text}`, c.sheet.name);
+      logFeed(w, c.id, "say", `A postcard from ${where} (${from}) arrives for ${c.sheet.name}: “${text}”`);
     } else if (it.type === "treat") {
       const c = own(w.creatures, it.to);
       const from = sanitizeName(it.from) || "a visitor";

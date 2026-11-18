@@ -20,16 +20,17 @@ function VisitForm({ creatures }: { creatures: { id: string; name: string; emoji
   const [from, setFrom] = useState("");
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
-  const send = async (kind: "note" | "treat") => {
+  const [where, setWhere] = useState("");
+  const send = async (kind: "note" | "treat" | "postcard") => {
     setMsg("");
     const r = await fetch("/api/visit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ kind, to, from, text }),
+      body: JSON.stringify({ kind, to, from, text, where }),
     });
     const j = await r.json().catch(() => ({}));
     setMsg(j.message ?? j.error ?? "Something went wrong.");
-    if (r.ok && kind === "note") setText("");
+    if (r.ok && kind !== "treat") setText("");
   };
   return (
     <div className="card">
@@ -48,6 +49,10 @@ function VisitForm({ creatures }: { creatures: { id: string; name: string; emoji
         <span>
           <button onClick={() => send("note")} disabled={text.trim().length < 2}>
             Leave a note
+          </button>{" "}
+          <input placeholder="postcard from where?" value={where} maxLength={24} onChange={(e) => setWhere(e.target.value)} style={{ width: 150 }} />{" "}
+          <button onClick={() => send("postcard")} disabled={text.trim().length < 2 || where.trim().length < 2}>
+            Send a postcard from elsewhere
           </button>{" "}
           <button onClick={() => send("treat")}>Give a loaf of bread</button>
         </span>
@@ -95,6 +100,7 @@ export function Town({ initial }: { initial: PublicWorld }) {
         <div className="note">Running with in-memory state. On Vercel, add the Upstash Redis integration so the town persists between requests.</div>
       )}
 
+      {w.outside && <div className="note" style={{ borderColor: "var(--line)", color: "var(--ink)" }}>{w.outside}</div>}
       {w.event && <div className="note" style={{ borderColor: "var(--line)", color: "var(--ink)" }}>Today in town: {w.event}</div>}
 
       <h2>The town</h2>
@@ -196,6 +202,7 @@ export function Town({ initial }: { initial: PublicWorld }) {
       </div>
 
       <h2>Notice board</h2>
+      <p className="why"><Link href="/postcards">Postcards from the town</Link> · <a href="/postcards/feed.xml">feed</a></p>
       <div className="feed">
         <ul>
           {w.board.length === 0 && <li><time /> <div className="why">Nothing pinned yet.</div></li>}

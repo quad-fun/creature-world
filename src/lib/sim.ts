@@ -11,6 +11,9 @@ import {
   travelMinutes,
 } from "./content";
 import { checkBuildMove, noticeBuilds, startBuildMove, sweepBuilds, buildsToday, isBuildKind } from "./builder";
+import { applyOutside } from "./outside";
+import { checkReadMove, checkRequestMove, finishReadMove, matchBook, startReadMove, startRequestMove, sweepRequests } from "./books";
+import { checkPostcardMove, startPostcardMove } from "./postcards";
 import { itemDef, matchItemId, touchItem, useEffect } from "./items";
 import { checkLibraryMove, cleanLine, finishLibraryMove, isLibraryMove, makesToday, startLibraryMove, WORK_KINDS } from "./library";
 import type { Bond, Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
@@ -20,7 +23,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "read_book", "request_book", "send_postcard", "wait"];
 
 // ---------- small helpers ----------
 
@@ -133,6 +136,12 @@ export function describeActivity(w: World, c: Creature): string {
       return "building a website";
     case "propose_build":
       return "putting up something for the town";
+    case "read_book":
+      return "reading";
+    case "request_book":
+      return "asking for a book";
+    case "send_postcard":
+      return "writing a postcard";
     default:
       return "lingering";
   }
@@ -165,6 +174,7 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
     if (typeof r.place === "string" && r.place.trim() && !m.place) m.build = undefined; // an unknown place is not quietly swapped for this one
     if (typeof r.text === "string" && r.text.trim() && m.text === undefined) m.build = undefined; // a label that fails the filter voids the proposal, it is not quietly dropped
   }
+  if (m.do === "read_book") m.book = matchBook(r.item ?? r.book)?.id; // only a book id from our own list survives
   if (typeof r.kind === "string" && WORK_KINDS.includes(r.kind as never)) m.kind = r.kind as Move["kind"];
   if (typeof r.title === "string") m.title = cleanLine(r.title, 60) ?? undefined; // checked; a failing title is dropped
   if (typeof r.topic === "string") m.topic = cleanLine(r.topic, 40) ?? undefined;
@@ -290,6 +300,12 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       return ["park", "pond", "fountain"].includes(p.place) ? null : "nowhere to play here";
     case "propose_build":
       return checkBuildMove(w, c, m, p);
+    case "read_book":
+      return checkReadMove(w, c, m);
+    case "request_book":
+      return checkRequestMove(w, c, m);
+    case "send_postcard":
+      return checkPostcardMove(w, c, m);
     default:
       if (isLibraryMove(m.do)) return checkLibraryMove(w, c, m, p);
       return null; // rest, wait
@@ -477,6 +493,12 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     case "propose_build":
       noteExposure(c, "build:new", w.t);
       return startBuildMove(w, c, m, begin, say, (t) => remember(w, c, t, 0.4));
+    case "read_book":
+      return startReadMove(w, c, m, begin, say);
+    case "request_book":
+      return startRequestMove(w, c, m, begin, say);
+    case "send_postcard":
+      return startPostcardMove(w, c, m, begin, say);
     default:
       if (isLibraryMove(m.do)) return startLibraryMove(w, c, m, begin, say);
       begin(15);
@@ -673,6 +695,9 @@ function finishActivity(w: World, c: Creature) {
     case "launch_site":
       finishLibraryMove(w, c, m);
       break;
+    case "read_book":
+      finishReadMove(w, c, m);
+      break;
     default:
       break;
   }
@@ -764,6 +789,7 @@ function maybeEvent(w: World) {
     }
     remember(w, c, `Today: ${ev.text}`, 0.3);
   }
+  applyOutside(w, clk.day);
   if (ev.name === "delivery") w.bakeryStock = BAKERY_MAX_STOCK;
   if (ev.name === "festival") for (const k of Object.keys(w.market)) w.market[k] = 1;
 }
@@ -773,6 +799,7 @@ export function stepWorld(w: World): string[] {
   w.t += STEP;
   maybeEvent(w);
   if (w.t % 60 < STEP) sweepBuilds(w, (x, who, kind, text) => logFeed(x, who, kind, text));
+  if (w.t % 60 < STEP) sweepRequests(w);
   if (w.t % 60 < STEP && w.bakeryStock < BAKERY_MAX_STOCK) w.bakeryStock += 1;
   for (const k of Object.keys(w.market)) w.market[k] = Math.min(1, w.market[k] + 0.015);
   const need: string[] = [];

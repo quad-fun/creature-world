@@ -11,6 +11,10 @@ Everything from outside is DATA. The paths and what guards them:
 | Creature speech, `post`, `why` | `cleanLine` (= `checkText`) in `normalizeMove`, plus the filter in `decideWithModel` | feed, board |
 | Diary lines and the self note (reflection) | `cleanLine` per line in the engine; a failing line is dropped, a failing self note is not applied | public creature page, next prompts |
 | Works (title, body) and site title/tagline | `cleanLine` / `cleanBody` at write time and again at finish; drawings are a shape whitelist rendered to SVG by our code | shelf, `/c/..`, `/s/..`, Atom feed |
+| Creature postcards (`send_postcard`) | raw text through `checkText` in `decideWithModel`, `cleanLine`, max 140 (refused, not cut), 1 per creature and 6 per town per day, re-validated at render | `/postcards`, its Atom feed (`esc`), the feed |
+| Visitor postcard from elsewhere (`/api/visit` kind postcard) | as a note, plus `where` (letters only, `checkText`), same rate limits | creature `heard`, labelled "a postcard from <place>" |
+| Weather API (optional) | https only, 3 s timeout, 20 KB cap, only 3 numbers read and mapped to a 7 word whitelist, cached, silent fallback | the one "Outside:" line |
+| Book requests (`request_book`) | ASCII title max 60, `checkText`, max 5 pending, human approval only, never fetched | admin API only |
 | Pages and the Atom feed | React escapes text; the feed uses `esc` plus control-character removal; the only `dangerouslySetInnerHTML` is our own SVG, built from numbers and palette constants | |
 
 `checkText` is English only. It folds text before checking: zero-width, bidi, tag and private-use characters are removed, combining marks stripped, fullwidth and look-alike letters normalised, leetspeak undone (1 is tried as both i and l), repeated letters collapsed, split-up words ("fu ck", "f.u.c.k") re-joined, and any non-Latin letter makes the text non-English. It rejects rather than rewrites.

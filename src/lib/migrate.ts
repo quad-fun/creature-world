@@ -3,6 +3,8 @@ import { clamp, ensureNeeds } from "./affect";
 import { seedInterests } from "./novelty";
 import { MAX_ACTIVE_BUILDS, MAX_PENDING_BUILDS, cleanBuildText, isBuildKind } from "./builder";
 import { PLACE_IDS } from "./content";
+import { checkText } from "./filter";
+import { validOutside } from "./outside";
 import type { Build, Creature, World } from "./types";
 
 /** A stored build must fit the schema exactly; anything else (hand-edited or corrupt data) is dropped on load. */
@@ -15,6 +17,16 @@ function validBuild(b: unknown): b is Build {
   );
 }
 
+const okLine = (t: unknown, max: number) => typeof t === "string" && t.length > 0 && t.length <= max && !/[<>\u0000-\u001f]/.test(t) && checkText(t).ok;
+const validCard = (p: unknown) => {
+  const x = p as World["postcards"][number];
+  return !!x && typeof x === "object" && Number.isInteger(x.id) && Number.isFinite(x.t) && Number.isFinite(x.ts) && typeof x.by === "string" && okLine(x.name, 20) && ["otter", "magpie", "toad"].includes(x.species) && PLACE_IDS.includes(x.place) && okLine(x.text, 140);
+};
+const validReq = (r: unknown) => {
+  const x = r as World["bookRequests"][number];
+  return !!x && typeof x === "object" && Number.isInteger(x.id) && typeof x.by === "string" && Number.isFinite(x.t) && (x.status === "pending" || x.status === "approved") && okLine(x.title, 60) && /^[A-Za-z0-9 ,.'!?:;-]+$/.test(x.title);
+};
+
 type Legacy = Creature & {
   drives?: { food: number; energy: number; social: number; curiosity: number; comfort: number };
   affect?: { valence: number; arousal: number };
@@ -26,6 +38,11 @@ export function migrate(w: World): World {
   w.items ??= {};
   w.builds = Array.isArray(w.builds) ? w.builds.filter(validBuild).slice(0, MAX_ACTIVE_BUILDS + MAX_PENDING_BUILDS) : [];
   w.buildSeq = Math.max(typeof w.buildSeq === "number" && Number.isFinite(w.buildSeq) ? w.buildSeq : 0, ...w.builds.map((b) => b.id));
+  if (!validOutside(w.outside)) delete w.outside; // the engine or stepWorld rebuilds it
+  w.postcards = Array.isArray(w.postcards) ? w.postcards.filter(validCard).slice(-40) : [];
+  w.postcardSeq = Math.max(typeof w.postcardSeq === "number" && Number.isFinite(w.postcardSeq) ? w.postcardSeq : 0, ...w.postcards.map((p) => p.id));
+  w.bookRequests = Array.isArray(w.bookRequests) ? w.bookRequests.filter(validReq).slice(-12) : [];
+  w.bookSeq = Math.max(typeof w.bookSeq === "number" && Number.isFinite(w.bookSeq) ? w.bookSeq : 0, ...w.bookRequests.map((r) => r.id));
   w.appraisals ??= { day: "", n: 0 };
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
@@ -36,6 +53,10 @@ export function migrate(w: World): World {
     c.makes ??= { day: 0, n: 0 };
     c.site ??= null;
     c.buildsMade ??= { day: 0, n: 0 };
+    c.reads ??= { day: 0, n: 0 };
+    c.cards ??= { day: 0, n: 0 };
+    c.bookReqDay = Number.isFinite(c.bookReqDay) ? c.bookReqDay : 0;
+    c.booksRead = Array.isArray(c.booksRead) ? c.booksRead.filter((b) => typeof b === "string" && /^[a-z]{1,20}$/.test(b)).slice(-12) : [];
     if (c.drives || c.affect) {
       // old model: five drives plus valence/arousal and a slow mood -> mood, energy and influences
       const d = c.drives;

@@ -95,6 +95,10 @@ export function base(
     makes: { day: 0, n: 0 },
     buildsMade: { day: 0, n: 0 },
     site: null,
+    reads: { day: 0, n: 0 },
+    booksRead: [],
+    cards: { day: 0, n: 0 },
+    bookReqDay: 0,
   };
   ensureNeeds(c);
   c.interests = seedInterests(c);
@@ -160,5 +164,9 @@ export function seedWorld(nowMs: number): World {
     boardSeq: 0,
     builds: [],
     buildSeq: 0,
+    postcards: [],
+    postcardSeq: 0,
+    bookRequests: [],
+    bookSeq: 0,
   };
 }
