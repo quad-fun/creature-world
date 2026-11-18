@@ -16,7 +16,7 @@ export const maxDuration = 60; // after() runs a tick
 export async function POST(req: Request) {
   const body = await readJson(req);
   if (!body) return NextResponse.json({ error: "bad request" }, { status: 400 });
-  const to = String(body.to ?? "");
+  const to = typeof body.to === "string" ? body.to : "";
   const from = sanitizeName(body.from) || "a visitor";
   const name = sanitizeName(body.name, NAME_MAX);
   const description = sanitizeText(body.description, DESC_MAX);

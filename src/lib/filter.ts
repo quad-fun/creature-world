@@ -88,16 +88,17 @@ const CONTACT_PHRASES = ["text me", "email me", "e mail me", "mail me", "my numb
 
 const EMAIL = /[a-z0-9._%+-]+\s*(@|\(at\)|\[at\])\s*[a-z0-9.-]+\s*(\.|\(dot\)|\[dot\])\s*[a-z]{2,}/i;
 const SPELLED_EMAIL = /\b[a-z0-9._-]+ (at|@) [a-z0-9-]+ (dot|\.) [a-z]{2,}\b/;
-const DOT_TLD = /\bdot (com|net|org|io|xyz|ru|me|co|gg|ly|app|dev|uk|de|info|biz)\b/;
+const DOT_TLD = /\bdot (com|net|org|io|xyz|ru|me|co|gg|ly|app|dev|uk|de|info|biz|shop|store|top|tech|club|live|site|online|link|ai|tv|fm)\b/;
 const PHONE = /(\+?\d[\d\s().-]{8,}\d)/;
 const NUMBER_WORDS = /\b(?:(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|ten)\b[\s,.-]*){7,}/;
-const URLISH = /(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|xyz|ru|me|co|gg|ly|app|dev|uk|de|info|biz|tk|cc|to|link|click|site|online)\b|\b(t\.me|bit\.ly|wa\.me|discord\.gg)\b)/i;
+const URLISH = /(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|xyz|ru|me|co|gg|ly|app|dev|uk|de|info|biz|tk|link|click|site|online|shop|store|top|tech|club|live|fun|space|pro|website|cloud|page|today|news|world|life|blog|one|vip|ai|sh|ws|tv|fm|cn|in|us|ca|au|fr|it|nl|br|example|test|invalid|local|onion)\b|\b(t\.me|bit\.ly|wa\.me|discord\.gg)\b)/i;
 const ADDRESS = /\b\d{1,5}\s+[a-z]+\s+(street|st|road|rd|avenue|ave|lane|ln|drive|dr|blvd)\b/i;
 const HANDLE = /(^|\s)@[a-z0-9_]{3,}/i;
 
 // English only (for now). The word lists above are English, so other languages would sail straight past them.
 const STOP = new Set(("the a an and or but is are was were be been i you he she it we they me my your his her our their to of in on at for with this that these those " +
-  "hi hello hey thanks thank please not no yes do does did have has had will can so if as by from what how when who there here just like love good nice very too up out").split(" "));
+  "hi hello hey thanks thank please not no yes do does did have has had will can so if as by from what how when who there here just like love good nice very too up out " +
+  "never always sometimes some all any each every more most other than then them us am about into over under after before again also only own same such both few would could should may might must shall because while where which why now back down off once its into over about through today tonight tomorrow yesterday").split(" "));
 // Common words of French, Spanish, Italian, Portuguese, German and Dutch that are not English words.
 const FOREIGN = new Set(("bonjour bonsoir merci ami amie amis amigo amiga amigos hola gracias buenos buenas dias noches ciao grazie obrigado obrigada voce tudo muito und ich nicht ist wie geht dir mein meine " +
   "nein danke bitte hallo guten une est vous nous les des pour avec sans oui soy estoy esta como mucho quiero gustaria que por para del los las una pero muy mio mia meu minha nao sim uma ein eine " +

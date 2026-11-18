@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const body = await readJson(req);
   if (!body) return NextResponse.json({ error: "bad request" }, { status: 400 });
   const kind = body.kind === "treat" ? "treat" : body.kind === "note" ? "note" : null;
-  const to = String(body.to ?? "");
+  const to = typeof body.to === "string" ? body.to : "";
   const from = sanitizeName(body.from) || "a visitor";
   const text = sanitizeText(body.text, 200);
   if (!kind) return NextResponse.json({ error: "kind must be note or treat" }, { status: 400 });

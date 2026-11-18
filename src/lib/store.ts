@@ -76,7 +76,13 @@ export function getStore(): Store {
         const raw = await redis.lrange(INBOX_KEY, 0, 49);
         if (!raw.length) return [];
         await redis.ltrim(INBOX_KEY, raw.length, -1);
-        return raw.map((x) => (typeof x === "string" ? JSON.parse(x) : x) as InboxItem);
+        return raw.flatMap((x) => {
+          try {
+            return [(typeof x === "string" ? JSON.parse(x) : x) as InboxItem]; // one corrupt entry must not poison the queue
+          } catch {
+            return [];
+          }
+        });
       },
       hit: async (key, limit, windowS) => {
         const k = `cw:rl:${key}`;

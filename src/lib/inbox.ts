@@ -100,6 +100,7 @@ function applyOne(w: World, it: InboxItem) {
       logFeed(w, c.id, "move", `${from} (a visitor) gives ${c.sheet.name} ${d.name}.`);
     } else if (it.type === "adopt") {
       if (Object.keys(w.creatures).length >= MAX_CREATURES) return;
+      if (![it.temperament, it.likes, it.dislikes].every(Array.isArray)) return; // only ever arrays from our routes; guards a tampered queue
       const name = sanitizeName(it.name);
       if (name.length < 2 || !Object.hasOwn(SPECIES_EMOJI, it.species)) return;
       if (!checkText(name).ok || checkAll([...it.temperament, ...it.likes, ...it.dislikes, it.voice ?? ""])) return;

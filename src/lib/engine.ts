@@ -141,9 +141,13 @@ export async function advanceWorld(opts: { force?: boolean } = {}): Promise<Tick
   if (!(await store.lock(55))) return { ran: false, steps: 0, world };
   try {
     world = (await store.load()) ?? world; // reload after taking the lock
-    const inbox = await store.drainInbox();
+    const inbox = (await store.drainInbox()).filter((it) => it && typeof it === "object" && typeof (it as { type?: unknown }).type === "string");
     if (inbox.length) {
-      await appraiseGifts(world, inbox, { deadline: Date.now() + cfg.modelWindowMs }); // few cheap calls a day, at most 2 per tick; rules fallback otherwise
+      try {
+        await appraiseGifts(world, inbox, { deadline: Date.now() + cfg.modelWindowMs }); // few cheap calls a day, at most 2 per tick; rules fallback otherwise
+      } catch (e) {
+        console.error("appraisal failed", (e as Error)?.message); // never lose the rest of the batch or the tick
+      }
       applyInbox(world, inbox);
     }
     const now = Date.now();

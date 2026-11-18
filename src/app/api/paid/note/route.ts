@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const body = await readJson(req);
   if (!body) return NextResponse.json({ error: "bad request" }, { status: 400 });
-  const to = String(body.to ?? "");
+  const to = typeof body.to === "string" ? body.to : "";
   const from = sanitizeName(body.from) || "a visitor";
   const text = sanitizeText(body.text, 200);
   if (text.length < 2) return NextResponse.json({ error: "write a few words" }, { status: 400 });
