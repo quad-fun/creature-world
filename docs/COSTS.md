@@ -44,3 +44,6 @@ A realistic day is far lower: creatures only decide when idle, sleep through the
 
 ## Shops
 `open_shop` adds no model call: it is one more move in the normal decision, so the per-creature daily cap still bounds everything. The prompt grows by about 150 tokens per decision (a rough extra of 6 x 200 x 150 = 180k input tokens a day at the cap, about $0.02 at the default prices). Visitor coins are not money: at most 60 in-world coins a day enter the town (see docs/SHOPS.md).
+
+## Creations
+`make_game` and `compose` add no model call: they are moves in the normal decision, bounded by the per-creature daily cap. The prompt grows by about 200 tokens per decision (see docs/CREATIONS.md).

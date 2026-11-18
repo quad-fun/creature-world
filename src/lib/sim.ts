@@ -17,6 +17,7 @@ import { applyOutside } from "./outside";
 import { checkReadMove, checkRequestMove, finishReadMove, matchBook, startReadMove, startRequestMove, sweepRequests } from "./books";
 import { checkPostcardMove, startPostcardMove } from "./postcards";
 import { itemDef, matchItemId, touchItem, useEffect } from "./items";
+import { checkCreationMove, finishCreationMove, normalizeGame, normalizeInstrument, normalizeSteps, normalizeTempo, startCreationMove, sweepCreations } from "./creations";
 import { checkShopMove, finishShopMove, listingResolver, normalizeListings, startShopMove, sweepShops } from "./shops";
 import { checkLibraryMove, cleanLine, finishLibraryMove, isLibraryMove, makesToday, startLibraryMove, WORK_KINDS } from "./library";
 import type { Bond, Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
@@ -26,7 +27,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "open_shop", "propose_build", "read_book", "request_book", "send_postcard", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "open_shop", "make_game", "compose", "propose_build", "read_book", "request_book", "send_postcard", "wait"];
 
 // ---------- small helpers ----------
 
@@ -141,6 +142,10 @@ export function describeActivity(w: World, c: Creature): string {
       return "building a website";
     case "open_shop":
       return "setting up the shop";
+    case "make_game":
+      return "thinking up a quiz";
+    case "compose":
+      return "composing a tune";
     case "propose_build":
       return "putting up something for the town";
     case "read_book":
@@ -184,6 +189,12 @@ export function normalizeMove(w: World, raw: unknown): Move | null {
   if (m.do === "open_shop") {
     const l = normalizeListings(r.listings, (x) => matchItem(w, x));
     if (l) m.listings = l; // hostile or malformed listings void the set; shops.ts validates again
+  }
+  if (m.do === "make_game") m.game = normalizeGame(r.game) ?? undefined; // anything off voids the game; creations.ts validates again
+  if (m.do === "compose") {
+    m.steps = normalizeSteps(r.steps) ?? undefined;
+    m.tempo = normalizeTempo(r.tempo) ?? undefined;
+    m.instrument = normalizeInstrument(r.instrument) ?? undefined;
   }
   if (m.do === "read_book") m.book = matchBook(r.item ?? r.book)?.id; // only a book id from our own list survives
   if (typeof r.kind === "string" && WORK_KINDS.includes(r.kind as never)) m.kind = r.kind as Move["kind"];
@@ -400,6 +411,9 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       return checkBuildMove(w, c, m, p);
     case "open_shop":
       return checkShopMove(w, c, m, p);
+    case "make_game":
+    case "compose":
+      return checkCreationMove(w, c, m, { place: p.place, coins: p.coins, site: !!c.site });
     case "read_book":
       return checkReadMove(w, c, m);
     case "request_book":
@@ -688,6 +702,9 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     }
     case "open_shop":
       return startShopMove(w, c, m, begin, say);
+    case "make_game":
+    case "compose":
+      return startCreationMove(w, c, m, begin, say);
     case "propose_build":
       noteExposure(c, "build:new", w.t);
       return startBuildMove(w, c, m, begin, say, (t) => remember(w, c, t, 0.4));
@@ -972,6 +989,10 @@ function finishActivity(w: World, c: Creature) {
     case "open_shop":
       finishShopMove(w, c, m);
       break;
+    case "make_game":
+    case "compose":
+      finishCreationMove(w, c, m);
+      break;
     case "read_book":
       finishReadMove(w, c, m);
       break;
@@ -1083,6 +1104,7 @@ export function stepWorld(w: World): string[] {
   if (w.t % 60 < STEP) sweepBuilds(w, (x, who, kind, text) => logFeed(x, who, kind, text));
   if (w.t % 60 < STEP) sweepRequests(w);
   if (w.t % 60 < STEP) sweepShops(w);
+  if (w.t % 60 < STEP) sweepCreations(w);
   if (w.t % 60 < STEP) sweepPlantings(w, (x, who, kind, text) => logFeed(x, who, kind, text));
   if (w.t % BERRY_REGROW_MIN < STEP && (w.berries ?? 0) < BERRY_MAX) w.berries = (w.berries ?? 0) + 1;
   if (w.t % 60 < STEP && w.bakeryStock < BAKERY_MAX_STOCK) w.bakeryStock += 1;

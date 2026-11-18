@@ -8,6 +8,7 @@ import { customId, giftText, itemDef, matchItemId, normName, touchItem } from ".
 import { MAX_CARRY, logFeed, remember, touchBond } from "./sim";
 import { noteExposure, novelty, payoffScale } from "./novelty";
 import { own } from "./own";
+import { applyCreationPlay } from "./creations";
 import { applyPurchase, type Refund } from "./shops";
 import type { InboxItem, World } from "./types";
 
@@ -53,7 +54,8 @@ export function applyInbox(w: World, items: InboxItem[]): Refund[] {
       if (it && typeof it === "object" && it.type === "purchase") {
         const r = applyPurchase(w, it);
         if (r) refunds.push(r);
-      } else applyOne(w, it);
+      } else if (it && typeof it === "object" && it.type === "creation_play") applyCreationPlay(w, it);
+      else applyOne(w, it);
     } catch (e) {
       console.error("inbox item skipped", (e as Error)?.message);
     }

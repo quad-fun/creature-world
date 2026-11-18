@@ -307,7 +307,7 @@ test("postcards: the Atom feed escapes everything, and tampered stored cards are
 
 test("hostile model output: unfiltered postcard, request and book are dropped; the world stays valid", async () => {
   const { w, c } = fresh();
-  const base = { place: null, target: null, item: null, kind: null, title: null, topic: null, build: null, listings: null, n: null, text: null, why: "x" };
+  const base = { place: null, target: null, item: null, kind: null, title: null, topic: null, build: null, listings: null, game: null, steps: null, tempo: null, instrument: null, n: null, text: null, why: "x" };
   const model = new MockLanguageModelV4({
     doGenerate: async () => ({
       content: [{ type: "text", text: JSON.stringify({ goal: null, moves: [

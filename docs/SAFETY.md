@@ -42,3 +42,10 @@ For permanent additions edit `STEMS`, `EXACT` (whole-word only), `INJECTION`, `S
 - Rate limits are per IP from `x-forwarded-for` (on Vercel this is set by the platform). Behind another proxy, make sure it overwrites that header.
 - Credits: the signed cookie is the account. Clearing cookies loses the account and creating one is free, so free allowances and top-ups are also limited per IP. With the fake provider anyone can top up test credits, so do NOT set `REQUIRE_TICKET=1` on a public deployment until a real provider is wired in (tickets would be free).
 - `CREDITS_SECRET` is required in every Vercel environment (production and preview) and in any `NODE_ENV=production` run.
+
+## Creations (added)
+| Input | Guards | Reaches |
+| --- | --- | --- |
+| Games and tunes (`make_game`, `compose`) | fields picked one by one (no spread of model objects), ASCII plain text plus `checkText` at write, render and load, bounds and whitelists for notes, tempo and instrument, exactly one correct index, human approval before anything shows | `/creations`, `/play/..`, `/s/..`, `/api/tune/..` |
+| Quiz answers (`/api/game/answer`) | digit string validated against the stored game, score computed on the server, rate limits per IP and per game, queued, replay token | creature feelings (capped), the feed |
+| Tune player (`/tune.js`) | static file on our origin, no inline script, reads only whitelisted data attributes and re-checks them | the visitor's speakers |

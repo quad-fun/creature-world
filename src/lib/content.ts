@@ -109,6 +109,8 @@ export function base(
     site: null,
     shop: null,
     shopDay: 0,
+    creationDay: 0,
+    creationJoy: { day: 0, n: 0 },
     reads: { day: 0, n: 0 },
     booksRead: [],
     cards: { day: 0, n: 0 },
@@ -185,6 +187,9 @@ export function seedWorld(nowMs: number): World {
     bookRequests: [],
     bookSeq: 0,
     receipts: [],
+    creations: [],
+    creationSeq: 0,
+    playTokens: [],
     shopDay: { day: "", n: 0, coins: 0 },
   };
 }

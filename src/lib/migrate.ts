@@ -7,7 +7,8 @@ import { PLACE_IDS } from "./content";
 import { checkText } from "./filter";
 import { validOutside } from "./outside";
 import { MAX_LISTINGS, OPEN_EXPIRES, PRICE_MAX, PRICE_MIN, RECEIPTS_KEPT, SHOP_PENDING_LIFETIME, cleanShopText, isSellable, isToken, SHOP_TAGLINE_MAX, SHOP_TITLE_MAX } from "./shops";
-import type { Build, Creature, Listing, Shop, World } from "./types";
+import { CREATION_PENDING_LIFETIME, PLAY_TOKENS_KEPT, isPlayToken, normalizeGame, normalizeInstrument, normalizeSteps, normalizeTempo } from "./creations";
+import type { Build, Creation, Creature, Listing, Shop, World } from "./types";
 
 /** A stored shop is rebuilt field by field: bad text or listings are dropped, a hopeless shop becomes null. */
 function cleanShop(raw: unknown, now: number): Shop | null {
@@ -63,6 +64,29 @@ const validReq = (r: unknown) => {
   return !!x && typeof x === "object" && Number.isInteger(x.id) && typeof x.by === "string" && Number.isFinite(x.t) && (x.status === "pending" || x.status === "approved") && okLine(x.title, 60) && /^[A-Za-z0-9 ,.'!?:;-]+$/.test(x.title);
 };
 
+/** A stored creation is rebuilt from validated parts; anything off is dropped. */
+function cleanCreation(raw: unknown, now: number): Creation | null {
+  const x = raw as Creation;
+  if (!x || typeof x !== "object" || !Number.isInteger(x.id) || typeof x.by !== "string" || (x.kind !== "game" && x.kind !== "tune") || (x.status !== "pending" && x.status !== "live")) return null;
+  const title = cleanShopText(x.title, 40);
+  if (!title) return null;
+  const finite = (n: unknown, d: number) => (typeof n === "number" && Number.isFinite(n) ? n : d);
+  const base = {
+    id: x.id, kind: x.kind, by: x.by, title, status: x.status,
+    createdT: finite(x.createdT, now),
+    expiresT: x.status === "live" ? OPEN_EXPIRES : Math.min(finite(x.expiresT, now + CREATION_PENDING_LIFETIME), now + CREATION_PENDING_LIFETIME),
+    paid: Math.min(10, Math.max(0, Math.floor(finite(x.paid, 0)))),
+    plays: Math.max(0, Math.floor(finite(x.plays, 0))),
+    day: x.day && typeof x.day.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.day.day) && Number.isInteger(x.day.n) && x.day.n >= 0 ? { day: x.day.day, n: x.day.n } : { day: "", n: 0 },
+  };
+  if (x.kind === "game") {
+    const g = normalizeGame({ questions: x.questions, results: x.results });
+    return g ? { ...base, questions: g.questions, results: g.results } : null;
+  }
+  const steps = normalizeSteps(x.steps), tempo = normalizeTempo(x.tempo), inst = normalizeInstrument(x.instrument);
+  return steps && tempo !== null && inst ? { ...base, steps, tempo, instrument: inst } : null;
+}
+
 type Legacy = Creature & {
   drives?: { food: number; energy: number; social: number; curiosity: number; comfort: number };
   affect?: { valence: number; arousal: number };
@@ -87,6 +111,9 @@ export function migrate(w: World): World {
     ? w.receipts.filter((r) => !!r && typeof r === "object" && isToken(r.token) && typeof r.ok === "boolean" && Number.isFinite(r.ts) && okLine(r.text, 200)).slice(-RECEIPTS_KEPT)
     : [];
   w.shopDay = w.shopDay && typeof w.shopDay.day === "string" && Number.isInteger(w.shopDay.n) && Number.isInteger(w.shopDay.coins) && w.shopDay.n >= 0 && w.shopDay.coins >= 0 ? w.shopDay : { day: "", n: 0, coins: 0 };
+  w.creations = Array.isArray(w.creations) ? w.creations.map((x) => cleanCreation(x, w.t)).filter((x): x is Creation => !!x).slice(0, 24) : [];
+  w.creationSeq = Math.max(typeof w.creationSeq === "number" && Number.isFinite(w.creationSeq) ? w.creationSeq : 0, ...w.creations.map((x) => x.id));
+  w.playTokens = Array.isArray(w.playTokens) ? w.playTokens.filter(isPlayToken).slice(-PLAY_TOKENS_KEPT) : [];
   w.appraisals ??= { day: "", n: 0 };
   for (const raw of Object.values(w.creatures)) {
     const c = raw as Legacy;
@@ -99,6 +126,8 @@ export function migrate(w: World): World {
     c.site ??= null;
     c.shop = cleanShop(c.shop, w.t);
     c.shopDay = Number.isFinite(c.shopDay) ? c.shopDay : 0;
+    c.creationDay = Number.isFinite(c.creationDay) ? c.creationDay : 0;
+    c.creationJoy = c.creationJoy && Number.isFinite(c.creationJoy.day) && Number.isFinite(c.creationJoy.n) ? c.creationJoy : { day: 0, n: 0 };
     c.buildsMade ??= { day: 0, n: 0 };
     c.reads ??= { day: 0, n: 0 };
     c.cards ??= { day: 0, n: 0 };

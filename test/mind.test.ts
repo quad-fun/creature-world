@@ -5,7 +5,7 @@ import { seedWorld } from "../src/lib/content";
 import { decideWithModel, reflectWithModel } from "../src/lib/mind";
 import { validateMoves } from "../src/lib/sim";
 
-const NEW_MOVE_FIELDS = { kind: null, title: null, topic: null, n: null, build: null, listings: null };
+const NEW_MOVE_FIELDS = { kind: null, title: null, topic: null, n: null, build: null, listings: null, game: null, steps: null, tempo: null, instrument: null };
 const mockReturning = (obj: unknown) => {
   const o = obj as { moves?: object[] };
   if (o.moves) o.moves = o.moves.map((m) => ({ ...NEW_MOVE_FIELDS, ...m }));

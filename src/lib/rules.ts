@@ -13,6 +13,7 @@ import { ruleReadOption } from "./books";
 import { cardLines, cardsToday, checkPostcardMove } from "./postcards";
 import { ruleLibraryOptions } from "./library";
 import { ruleShopOption } from "./shops";
+import { ruleCreationOption } from "./creations";
 import { MAX_CARRY, usable, clockOf, creaturesAt, giftBlocked, pick, rand, sellBlocked, teaBlocked } from "./sim";
 import type { Creature, ItemId, Move, MoveKind, PlaceId, World } from "./types";
 
@@ -183,6 +184,9 @@ export function ruleMoves(w: World, c: Creature): Move[] {
 
   const shop = ruleShopOption(w, c);
   if (shop) add("open_shop", shop.want, shop.moves, shop.key);
+
+  const made = ruleCreationOption(w, c);
+  if (made) add("make_game", made.want, made.moves, made.key);
 
   const read = ruleReadOption(w, c);
   if (read) add("read_book", read.want * (0.8 + bored), read.moves, read.key);

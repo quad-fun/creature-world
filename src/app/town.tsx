@@ -202,7 +202,7 @@ export function Town({ initial }: { initial: PublicWorld }) {
       </div>
 
       <h2>Notice board</h2>
-      <p className="why"><Link href="/postcards">Postcards from the town</Link> · <a href="/postcards/feed.xml">feed</a> · <Link href="/shops">Shops</Link></p>
+      <p className="why"><Link href="/postcards">Postcards from the town</Link> · <a href="/postcards/feed.xml">feed</a> · <Link href="/shops">Shops</Link> · <Link href="/creations">Games and tunes</Link></p>
       <div className="feed">
         <ul>
           {w.board.length === 0 && <li><time /> <div className="why">Nothing pinned yet.</div></li>}

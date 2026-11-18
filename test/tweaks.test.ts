@@ -221,7 +221,7 @@ test("auto-walk only when the move would then be valid; the 3 move cap holds; tr
 // ---------------------------------------------------------------- 4. catch-up
 
 const reply = (o: unknown) => ({ content: [{ type: "text", text: JSON.stringify(o) }], finishReason: { unified: "stop", raw: "stop" }, usage: { inputTokens: { total: 900, noCache: 900 }, outputTokens: { total: 100, text: 100 } }, warnings: [] });
-const nul = { place: null, target: null, item: null, kind: null, title: null, topic: null, n: null, build: null, listings: null, text: null, why: "ok" };
+const nul = { place: null, target: null, item: null, kind: null, title: null, topic: null, n: null, build: null, listings: null, game: null, steps: null, tempo: null, instrument: null, text: null, why: "ok" };
 function counting(goal: string | null = "go and talk with a friend") {
   const calls = { decide: 0 };
   const model = new MockLanguageModelV4({

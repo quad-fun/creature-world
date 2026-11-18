@@ -41,6 +41,8 @@ export type MoveKind =
   | "buy_slot"
   | "launch_site"
   | "open_shop"
+  | "make_game"
+  | "compose"
   | "propose_build"
   | "read_book"
   | "request_book"
@@ -101,6 +103,30 @@ export interface Shop {
   draft?: { title: string; tagline: string; expiresT: number }; // edited text of an open shop, waiting for a human
   sales: { day: string; n: number }; // real UTC day, sales that day
   sold: number; // lifetime sales
+}
+/** One quiz question: plain text, 2 to 4 options, exactly one correct index (creations.ts). */
+export interface Question {
+  prompt: string;
+  options: string[];
+  correct: number;
+}
+/** A creature-made quiz game or tune on its site. Pure data; invisible until a human approves it. */
+export interface Creation {
+  id: number;
+  kind: "game" | "tune";
+  by: string; // creature id
+  title: string;
+  status: "pending" | "live";
+  createdT: number;
+  expiresT: number; // pending: lapses at this world minute
+  paid: number; // coins held while pending
+  plays: number; // plays or listens that were counted
+  day: { day: string; n: number }; // real UTC day, counted plays that day
+  questions?: Question[]; // game
+  results?: string[]; // game: three result lines (low, middle, high), "" for none
+  steps?: string[]; // tune
+  tempo?: number;
+  instrument?: string;
 }
 /** What a visitor sees after buying (or failing to). Text is built from checked words only. */
 export interface Receipt {
@@ -170,6 +196,10 @@ export interface Move {
   topic?: string; // make: optional subject
   n?: number; // discard / give_work: work number
   listings?: { item?: string; work?: number; price: number }[]; // open_shop: what to put on sale (validated in shops.ts)
+  game?: { questions: Question[]; results: string[] }; // make_game: validated in creations.ts
+  steps?: string[]; // compose: up to 16 notes from a whitelist
+  tempo?: number; // compose: a whitelisted bpm
+  instrument?: string; // compose: a whitelisted waveform
   paint?: boolean; // set only by the engine when a drawing is made with a paint set; never from model output
   piece?: { title: string; body: string; shapes?: Shape[] }; // set only by the engine after writing; never from model output
   text?: string; // speak
@@ -250,6 +280,8 @@ export interface Creature {
   site: Site | null;
   shop: Shop | null;
   shopDay: number; // world day of the last open_shop or relist (1 a day)
+  creationDay: number; // world day of the last make_game or compose (1 a day)
+  creationJoy: { day: number; n: number }; // plays that moved this creature on this world day
   reads: { day: number; n: number }; // books read on this world day
   booksRead: string[]; // recent book ids, newest last (max 12)
   cards: { day: number; n: number }; // postcards sent on this world day
@@ -295,6 +327,7 @@ export type InboxItem =
   | { type: "treat"; to: string; from: string }
   | { type: "gift"; to: string; from: string; name: string; description: string }
   | { type: "postcard"; to: string; from: string; where: string; text: string }
+  | { type: "creation_play"; id: number; token: string; score?: number; of?: number }
   | { type: "purchase"; creature: string; listing: number; paid: number; token: string; vkey: string }
   | {
       type: "adopt";
@@ -373,6 +406,9 @@ export interface World {
   bookRequests: BookRequest[]; // capped
   bookSeq: number;
   receipts: Receipt[]; // newest last, capped (shops.ts)
+  creations: Creation[]; // games and tunes, pending and live (creations.ts)
+  creationSeq: number;
+  playTokens: string[]; // last applied play tokens (replay guard), capped
   shopDay: { day: string; n: number; coins: number }; // visitor purchases applied today (real UTC day)
   event?: { day: number; name: string; text: string };
 }

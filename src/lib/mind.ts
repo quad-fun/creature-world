@@ -11,6 +11,7 @@ import { MAKES_PER_DAY, MAKE_COST, MAX_SLOTS, SITE_COST, SITE_MIN_WORKS, makesTo
 import { BOOKS, BOOKS_PER_DAY, MAX_PENDING_REQUESTS, bookTags, pendingRequests, readsToday } from "./books";
 import { outsideLine } from "./outside";
 import { shopNote } from "./shops";
+import { creationNote } from "./creations";
 import { GATHERS_PER_DAY, GATHER_MINUTES, GOODS, SEED_PRICE, gathersToday, isRaining, weatherNow } from "./goods";
 import { POSTCARDS_PER_DAY, POSTCARD_MAX, cardsToday } from "./postcards";
 import { clockOf, creaturesAt, describeActivity, MAX_CARRY, MAX_SELL_RUN, POST_COOLDOWN, SELL_RUN_RESET } from "./sim";
@@ -31,15 +32,19 @@ export function modelAvailable(): boolean {
 // Nullable (not optional) fields keep the schema valid for every provider behind the Gateway.
 // Counts (1 to 3 moves) are enforced in code because not all providers support array bounds.
 const MoveSchema = z.object({
-  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "open_shop", "propose_build", "read_book", "request_book", "send_postcard", "wait"]),
+  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "open_shop", "make_game", "compose", "propose_build", "read_book", "request_book", "send_postcard", "wait"]),
   place: z.string().nullable().describe("walk only: a place id"),
   target: z.string().nullable().describe("speak or gift (or optionally use, to share it): a creature id"),
   item: z.string().nullable().describe("eat, sell, gift, use or craft (gear): an item name or id; buy_food: bread, tea or seeds; read_book: a book id from the town shelf"),
   kind: z.enum(["note", "plan", "journal", "drawing"]).nullable().describe("make only: what to make"),
-  title: z.string().nullable().describe("make: a working title; launch_site: the website title (max 60 characters); open_shop: the shop name (max 40 plain characters); request_book: the title you wish the town had (max 60 plain characters)"),
+  title: z.string().nullable().describe("make_game or compose: the title (max 40 plain characters); make: a working title; launch_site: the website title (max 60 characters); open_shop: the shop name (max 40 plain characters); request_book: the title you wish the town had (max 60 plain characters)"),
   topic: z.string().nullable().describe("make only: an optional subject, a few words"),
   build: z.enum(["bench", "garden", "flowerbox", "lantern", "sign"]).nullable().describe("propose_build only: what to put up here"),
   listings: z.array(z.object({ item: z.string().nullable(), work: z.number().nullable(), price: z.number() })).nullable().describe("open_shop only: 1 to 4 things for sale, each an item you carry OR a work number, with an integer price"),
+  game: z.object({ questions: z.array(z.object({ prompt: z.string(), options: z.array(z.string()), correct: z.number() })), results: z.array(z.string()) }).nullable().describe("make_game only: 3 to 5 questions with 2 to 4 options each and the index of the one correct option; results is 3 optional short lines (low, middle, high score)"),
+  steps: z.array(z.string()).nullable().describe("compose only: 4 to 16 notes from C4 D4 E4 F4 G4 A4 B4 C5 D5 E5 F5 G5 A5 B5 or rest"),
+  tempo: z.number().nullable().describe("compose only: 80, 110 or 140"),
+  instrument: z.string().nullable().describe("compose only: sine, square or triangle"),
   n: z.number().nullable().describe("discard or give_work only: the number of a work on your shelf"),
   text: z.string().nullable().describe("speak only: one or two short sentences in your voice; launch_site: a one-line tagline; open_shop: a short tagline (max 80); propose_build: the words on a sign (max 40 plain characters); send_postcard: the postcard (max 140 characters), otherwise null"),
   why: z.string().describe("one short sentence, first person, why you are doing this"),
@@ -253,6 +258,7 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `- discard (n is a work number) or give_work (target is someone here, n is a work number): free a slot. buy_slot: only at the fountain, costs ${slotPrice(c.shelfSlots)} coins (up to ${MAX_SLOTS} slots).`,
     `- launch_site: only at the workshop, once; needs ${SITE_MIN_WORKS} works and ${SITE_COST} coins; set title and text (a tagline). It shows your works and diary on a public page.`,
     shopNote(w, c),
+    creationNote(w, c),
     `- propose_build: build is one of ${Object.entries(BUILD_CATALOG).map(([k, d]) => `${k} (${d.cost} coins)`).join(", ")}; you build where you are (${PLACES[c.place].name}). A sign needs text. Costs coins and some energy, at most ${BUILDS_PER_DAY} a day (you have made ${buildsToday(w, c)} today). A plain bench, garden, flower box or lantern goes up at once; anything with words waits for the town's approval and may be turned down.`,
     `- read_book: item is a book id from the town shelf above. Takes about 30 minutes and a little energy, at most ${BOOKS_PER_DAY} a day; it feeds your interests. Rereading pays less.`,
     `- request_book: title is a book you wish the town had (plain letters, max 60). It only joins a short list a person may read; nothing is fetched. At most ${MAX_PENDING_REQUESTS} requests wait at once (${pendingRequests(w).length} now).`,

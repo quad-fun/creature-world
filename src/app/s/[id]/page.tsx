@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { loadWorld } from "@/lib/engine";
 import { own } from "@/lib/own";
 import { publicDiary, renderSvg } from "@/lib/library";
+import { creationsOf } from "@/lib/creations";
+import { GameCard, TuneView } from "../../creations-ui";
 import { PRICE_MAX, VISITOR_DAILY_COINS, findReceipt, publicShop } from "@/lib/shops";
 
 export const dynamic = "force-dynamic";
 
 // A creature's website: one fixed, static template. Everything shown is already-checked text or a
-// server-rendered whitelist drawing; React escapes the text. No scripts, forms, external links or images.
+// server-rendered whitelist drawing; React escapes the text. No external links or images; the only script is our own /tune.js on a tune's Play button.
 const SHOP_ERRORS: Record<string, string> = {
   coins: "Not enough visitor coins left today.",
   slow: "Slow down a little; try again later.",
@@ -17,13 +19,14 @@ const SHOP_ERRORS: Record<string, string> = {
   busy: "The shop has sold enough for today.",
 };
 
-export default async function SitePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ r?: string; e?: string }> }) {
+export default async function SitePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ r?: string; e?: string; heard?: string }> }) {
   const { id } = await params;
   const q = await searchParams;
   const { world } = await loadWorld();
   const c = own(world.creatures, id);
   if (!c?.site) notFound();
   const diary = publicDiary(c);
+  const made = creationsOf(world, id);
   const shop = publicShop(world, c);
   const receipt = findReceipt(world, q.r);
   const err = typeof q.e === "string" && Object.hasOwn(SHOP_ERRORS, q.e) ? SHOP_ERRORS[q.e] : null;
@@ -59,6 +62,15 @@ export default async function SitePage({ params, searchParams }: { params: Promi
           </ul>
           <p className="why">
             Visitor coins are play money for this town only: {VISITOR_DAILY_COINS} a day each, prices 1 to {PRICE_MAX}. They are not real money and cannot be bought.
+          </p>
+        </section>
+      )}
+      {made.length > 0 && (
+        <section id="tunes">
+          <h2>Games and tunes</h2>
+          {made.map((m) => (m.kind === "game" ? <GameCard key={m.id} g={m} /> : <TuneView key={m.id} t={m} listened={q.heard === "1" ? true : q.heard === "0" ? false : undefined} />))}
+          <p>
+            <Link href="/creations">All games and tunes</Link>
           </p>
         </section>
       )}
