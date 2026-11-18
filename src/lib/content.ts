@@ -8,10 +8,10 @@ export type Rates = { hunger: number; energy: number; loneliness: number; boredo
 
 export const PLACES: Record<PlaceId, { name: string; x: number; y: number; blurb: string }> = {
   fountain: { name: "the fountain", x: 5, y: 5, blurb: "A market stall sits beside the fountain; the town buys crafted things here." },
-  workshop: { name: "the workshop", x: 2, y: 3, blurb: "Benches, tools and good light. Crafting happens here." },
-  bakery: { name: "the bakery", x: 8, y: 3, blurb: "Sells bread for 2 coins while the stock lasts, and a cup of tea for 1." },
-  pond: { name: "the pond", x: 8, y: 8, blurb: "Quiet, muddy and cool." },
-  park: { name: "the park", x: 4, y: 8, blurb: "Open grass and benches. Good for play and wandering." },
+  workshop: { name: "the workshop", x: 2, y: 3, blurb: "Benches, tools and good light. Crafting happens here, and gear (fishing rod, kite, paint set, umbrella) can be made." },
+  bakery: { name: "the bakery", x: 8, y: 3, blurb: "Sells bread for 2 coins while the stock lasts, a cup of tea for 1, and seed packets for 2." },
+  pond: { name: "the pond", x: 8, y: 8, blurb: "Quiet, muddy and cool. Berries grow on the bank, and a fishing rod will find fish here." },
+  park: { name: "the park", x: 4, y: 8, blurb: "Open grass and benches. Good for play and wandering; berries grow here, kites fly here and seeds can be planted." },
   nests: { name: "the nests", x: 1, y: 7, blurb: "Warm beds. The only place to really sleep." },
 };
 export const PLACE_IDS = Object.keys(PLACES) as PlaceId[];
@@ -29,6 +29,14 @@ export const ITEMS: Record<CatalogItemId, { name: string; tags: string[]; food: 
   "mended-thing": { name: "mended thing", tags: ["mending", "useful"], food: 0, sell: 4 },
   trinket: { name: "shiny trinket", tags: ["shiny", "small"], food: 0, sell: 3 },
   potion: { name: "herbal potion", tags: ["herb", "strange"], food: 0, sell: 5 },
+  // town objects (goods.ts holds their rules): fixed catalogue, nothing the model can invent
+  berries: { name: "berries", tags: ["food", "berries", "sweet", "wild"], food: 0.15, sell: 0 },
+  fish: { name: "fish", tags: ["food", "fish", "fresh", "pond"], food: 0.65, sell: 2 },
+  rod: { name: "fishing rod", tags: ["tool", "pond", "patience"], food: 0, sell: 0 },
+  kite: { name: "paper kite", tags: ["toy", "wind", "play"], food: 0, sell: 0 },
+  paint: { name: "paint set", tags: ["art", "colour", "drawing"], food: 0, sell: 0 },
+  seeds: { name: "seed packet", tags: ["garden", "plant", "small"], food: 0, sell: 0 },
+  umbrella: { name: "umbrella", tags: ["wearable", "rain", "useful"], food: 0, sell: 0 },
 };
 export const ITEM_IDS = Object.keys(ITEMS) as CatalogItemId[];
 
@@ -94,6 +102,7 @@ export function base(
     goal: "",
     shelf: [],
     shelfSlots: 4,
+    gathers: { day: 0, n: 0 },
     workSeq: 0,
     makes: { day: 0, n: 0 },
     buildsMade: { day: 0, n: 0 },
@@ -148,6 +157,8 @@ export function seedWorld(nowMs: number): World {
     rng: 123456789,
     creatures: seedCreatures(),
     bakeryStock: BAKERY_MAX_STOCK,
+    berries: 6,
+    plantings: [],
     items: {},
     appraisals: { day: "", n: 0 },
     market: { "mended-thing": 1, trinket: 1, potion: 1 },

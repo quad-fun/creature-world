@@ -4,6 +4,8 @@
 // scored by how much the creature wants it times how fresh it is, so non-model moments vary too.
 import { appraise, needLevel } from "./affect";
 import { BREAD_PRICE, ITEMS, SPECIES, TEA_PRICE } from "./content";
+import { GATHERS_PER_DAY, GATHER_PLACES, GEAR_IDS, GOODS, SEED_PRICE, capReached, gathersToday, isRaining, weatherNow } from "./goods";
+import { plantError } from "./builder";
 import { familiarity, interestStrength, noteExposure, novelty, payoffScale, stepKindFor, topicOf } from "./novelty";
 import { itemDef } from "./items";
 import { ruleBuildOption } from "./builder";
@@ -61,6 +63,8 @@ export function ruleMoves(w: World, c: Creature): Move[] {
     if (food) return [{ do: "eat", item: food, why: "I am hungry and I have something to eat." }];
     if (c.coins >= BREAD_PRICE && w.bakeryStock > 0 && c.inventory.length < MAX_CARRY) // hands full: sell something first
       return [...walkTo(c.place, "bakery", "I am hungry; the bakery has bread."), { do: "buy_food", why: "Bread, please." }, { do: "eat", item: "bread", why: "Eating it while it is warm." }];
+    if (c.energy > 0.2 && c.inventory.length < MAX_CARRY && w.berries > 0 && gathersToday(w, c) < GATHERS_PER_DAY)
+      return [...walkTo(c.place, GATHER_PLACES.includes(c.place) ? c.place : "park", "I am hungry; berries are free."), { do: "gather", why: "Berries will do for now." }, { do: "eat", item: "berries", why: "Eating them fresh." }];
     if (sellables.length) return [...walkTo(c.place, "fountain", say(["I need coins for food.", "I should sell something and eat."])), { do: "sell", item: sellables[0], why: say(["Selling to buy bread.", "A sale will pay for a meal.", "Coins for bread, then."]) }];
     if (c.energy > 0.2 && c.inventory.length < MAX_CARRY)
       return [...walkTo(c.place, "workshop", "I need something to sell so I can eat."), { do: "craft", why: "Making something to sell." }];
@@ -134,6 +138,9 @@ export function ruleMoves(w: World, c: Creature): Move[] {
     }
   }
 
+  // a snack from the pocket (berries, fish) when somewhat hungry: free food is not left to spoil
+  if (food && hunger > 0.35 && !food.startsWith("x-") && itemDef(w, food).food > 0) add("eat", 0.15 + 0.6 * hunger, [{ do: "eat", item: food, why: say(["A little something to eat.", "A snack, I think."]) }], `item:${food}`);
+
   // a cup of tea: cheap comfort, mostly for those who like it; novelty makes a second and third cup less tempting
   {
     const likes = appraise(c, ITEMS.tea.tags) > 0;
@@ -146,6 +153,26 @@ export function ruleMoves(w: World, c: Creature): Move[] {
         ? [{ do: "eat", item: "tea", why: say(["A cup of tea, while it is warm.", "Tea, at last."]) }]
         : [...walkTo(c.place, "bakery", say(["I fancy a cup of tea.", "Tea at the bakery sounds right."])), { do: "buy_food", item: "tea", why: "One tea, please." }, { do: "eat", item: "tea", why: "Warm hands, warm cup." }];
       add("eat", want, moves, "item:tea");
+    }
+  }
+
+  // town objects: berries, fishing, kite, seeds, and a little gear-making. All scored by novelty like everything else.
+  {
+    const hasWhere = (id: string) => c.inventory.includes(id);
+    const room = c.inventory.length < MAX_CARRY;
+    const reserve = 10; // coins always kept for bread
+    if (room && c.energy > 0.2 && gathersToday(w, c) < GATHERS_PER_DAY && w.berries > 0) {
+      const spot: PlaceId = GATHER_PLACES.includes(c.place) ? c.place : "park";
+      add("gather", 0.18 + 0.35 * hunger + 0.1 * bored, [...walkTo(c.place, spot, say(["Berries should be ripe by now.", "I could pick a few berries."])), { do: "gather", why: say(["Free and sweet.", "A handful of berries will do.", "Picking berries, slowly."]) }], "gather:berries");
+    }
+    if (hasWhere("rod") && c.energy > 0.2 && room) add("use", 0.3 + 0.35 * bored, [...walkTo(c.place, "pond", "I want to fish."), { do: "use", item: "rod", why: say(["A quiet hour with the rod.", "Maybe something will bite."]) }], "use:rod");
+    if (hasWhere("kite") && !isRaining(w) && c.energy > 0.2) add("use", 0.3 + 0.3 * bored + (weatherNow(w) === "wind" ? 0.25 : 0), [...walkTo(c.place, "park", "Good day for a kite."), { do: "use", item: "kite", why: say(["Up it goes.", "Time to fly the kite."]) }], "use:kite");
+    if (hasWhere("seeds") && !plantError(w, "park")) add("use", 0.35, [...walkTo(c.place, "park", "I will plant these at the park."), { do: "use", item: "seeds", why: "Something to grow." }], "plant:seeds");
+    else if (!hasWhere("seeds") && room && c.coins >= SEED_PRICE + reserve + 4 && !capReached(w, "seeds") && !plantError(w, "park")) add("buy_food", 0.38, [...walkTo(c.place, "bakery", "The bakery sells seed packets."), { do: "buy_food", item: "seeds", why: "Seeds for the park." }], "item:seeds");
+    if (room && c.energy > 0.35) {
+      const wanted = GEAR_IDS.filter((g) => !hasWhere(g) && !capReached(w, g) && c.coins >= (GOODS[g].craftCost ?? 0) + reserve);
+      const g = [...wanted].sort((a, b) => familiarity(c, `craft:${b}`, w.t) - familiarity(c, `craft:${a}`, w.t)).reverse()[0];
+      if (g) add("craft", 0.42 + (g === "umbrella" && isRaining(w) ? 0.3 : 0), [...walkTo(c.place, "workshop", `A ${ITEMS[g].name} would be handy.`), { do: "craft", item: g, why: `I will make a ${ITEMS[g].name}.` }], `craft:${g}`);
     }
   }
 

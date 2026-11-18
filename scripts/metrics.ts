@@ -19,6 +19,8 @@ const price = (k: string) => Math.max(1, Math.round(((itemDef(w, k) as any).sell
 const lastKind: Record<string, string> = {};
 const run: Record<string, number> = {};
 let maxRun = 0;
+const useCounts: Record<string, number> = {};
+const peakHeld: Record<string, number> = {};
 
 for (let i = 0; i < days * 288; i++) {
   for (const id of stepWorld(w)) applyRulesForTest(w, w.creatures[id]);
@@ -31,10 +33,14 @@ for (let i = 0; i < days * 288; i++) {
       seen.set(c.id, c.activity);
       const key = c.activity.kind === "sell" ? `sell:${c.activity.move.item}` : c.activity.kind === "walk" ? lastKind[c.id] : c.activity.kind;
       if (c.activity.kind !== "walk") { run[c.id] = key === lastKind[c.id] && key?.startsWith("sell:") ? (run[c.id] ?? 1) + 1 : 1; lastKind[c.id] = key; maxRun = Math.max(maxRun, key?.startsWith("sell:") ? run[c.id] : 0); }
+      const a = c.activity;
+      const tag = a.kind === "use" ? `use:${a.move.item}` : a.kind === "craft" && a.move.item ? `craft:${a.move.item}` : a.kind === "gather" ? "gather" : a.kind === "eat" && ["berries", "fish"].includes(a.move.item) ? `eat:${a.move.item}` : a.kind === "sell" && a.move.item === "fish" ? "sell:fish" : a.kind === "make" && a.move.paint ? "make:paint" : a.kind === "buy_food" && a.move.item && a.move.item !== "bread" ? `buy:${a.move.item}` : null;
+      if (tag) useCounts[tag] = (useCounts[tag] ?? 0) + 1;
       p.counts[c.activity.kind] = (p.counts[c.activity.kind] ?? 0) + 1;
       if (!["walk", "sleep", "buy_food", "eat", "wait"].includes(c.activity.kind)) p.kinds[day].add(sig(c));
     }
     const h = hunger(c);
+    for (const it of new Set(c.inventory)) peakHeld[it as string] = Math.max(peakHeld[it as string] ?? 0, Object.values(w.creatures).reduce((n: number, o: any) => n + o.inventory.filter((x: string) => x === it).length, 0));
     p.maxHunger = Math.max(p.maxHunger, h);
     if (h > 0.88 && !p.starving) p.starve++;
     p.starving = h > 0.88;
@@ -61,3 +67,5 @@ console.log(`builds standing ${(w.builds ?? []).length} (total ever ${w.buildSeq
 console.log(`postcards sent ${(w as any).postcardSeq ?? 0} (kept ${(w as any).postcards?.length ?? 0}); books read ${Object.values(w.creatures).map((c: any) => `${c.id}:${(c.booksRead ?? []).length} distinct`).join(", ")}; book requests ${(w as any).bookRequests?.length ?? 0}; weather ${(w as any).outside?.weather ?? "n/a"}`);
 console.log(`market price floor (min coins seen): ${Object.entries(floor).map(([k, v]) => `${k} ${v}`).join(", ")}; longest same-item sell run ${maxRun}`);
 console.log(`total sells ${Object.values(per).reduce((a, p) => a + (p.counts.sell ?? 0), 0)}, total starvation events ${Object.values(per).reduce((a, p) => a + p.starve, 0)}, teas bought ${(w.feed as any[]).filter((f) => /cup of tea/.test(f.text)).length} (feed window only)`);
+console.log(`item/activity counts: ${JSON.stringify(useCounts)}`);
+console.log(`peak held in town per kind: ${JSON.stringify(peakHeld)}; berries now ${(w as any).berries ?? "n/a"}, plantings ${(w as any).plantings?.length ?? 0}`);

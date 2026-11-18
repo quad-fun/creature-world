@@ -9,7 +9,7 @@ import { PLACES } from "./content";
 import { checkText, stripInvisible } from "./filter";
 import { modelRef, persona } from "./mind";
 import { noteExposure, novelty, payoffScale, familiarity } from "./novelty";
-import { clockOf, logFeed, remember, touchBond } from "./sim";
+import { clockOf, logFeed, remember, touchBond, wearOne } from "./sim";
 import type { Creature, Move, MoveKind, PlaceId, Shape, Work, WorkKind, World } from "./types";
 
 export const WORK_KINDS: WorkKind[] = ["note", "plan", "journal", "drawing"];
@@ -19,6 +19,7 @@ export const isLibraryMove = (k: MoveKind) => LIBRARY_MOVES.includes(k);
 export const START_SLOTS = 4;
 export const MAX_SLOTS = 10;
 export const MAKE_COST = 3; // coins
+export const PAINT_MAKE_COST = 1; // a drawing made with a paint set needs only a coin of paper
 export const MAKE_ENERGY = 0.07;
 export const MAKE_MINUTES = 40;
 export const MAKES_PER_DAY = 2; // per creature per world day
@@ -314,6 +315,7 @@ export interface LibProj {
   slots: number;
   makes: number; // makes today, projected
   site: boolean;
+  inv?: string[]; // projected carried items (sim.ts passes its Projection)
 }
 
 export const hasSite = (c: Creature) => !!c.site;
@@ -325,9 +327,12 @@ export function checkLibraryMove(w: World, c: Creature, m: Move, p: LibProj): st
       if (!MAKE_PLACES.includes(p.place)) return "can only make things at the workshop or the park";
       if (c.energy <= 0.2) return "too tired to make anything";
       if (p.makes >= MAKES_PER_DAY) return "already made enough for today";
-      if (p.coins < MAKE_COST) return "not enough coins for materials";
+      {
+        const cost = m.kind === "drawing" && (p.inv ?? c.inventory).includes("paint") ? PAINT_MAKE_COST : MAKE_COST;
+        if (p.coins < cost) return "not enough coins for materials";
+        p.coins -= cost;
+      }
       if (p.shelf >= p.slots) return "the shelf is full; discard, give away a work or buy a slot first";
-      p.coins -= MAKE_COST;
       p.shelf += 1;
       p.makes += 1;
       return null;
@@ -382,11 +387,16 @@ export function startLibraryMove(w: World, c: Creature, m: Move, begin: (mins: n
       if (!MAKE_PLACES.includes(c.place)) return "can only make things at the workshop or the park";
       if (c.energy <= 0.2) return "too tired to make anything";
       if (makesToday(w, c) >= MAKES_PER_DAY) return "already made enough for today";
-      if (c.coins < MAKE_COST) return "not enough coins for materials";
       if (shelfRoom(c) <= 0) return "the shelf is full";
-      c.coins -= MAKE_COST;
-      c.makes = { day: clockOf(w.t).day, n: makesToday(w, c) + 1 };
       m.kind ??= chooseKind(w, c);
+      m.paint = m.kind === "drawing" && c.inventory.includes("paint") ? true : undefined; // engine-set only
+      const cost = m.paint ? PAINT_MAKE_COST : MAKE_COST;
+      if (c.coins < cost) {
+        m.paint = undefined;
+        return "not enough coins for materials";
+      }
+      c.coins -= cost;
+      c.makes = { day: clockOf(w.t).day, n: makesToday(w, c) + 1 };
       begin(MAKE_MINUTES);
       say(`${name} sits down to make a ${m.kind}.`);
       return null;
@@ -490,6 +500,10 @@ export function finishLibraryMove(w: World, c: Creature, m: Move): void {
     impulse(c, 0.04 * pm);
     addInfluence(c, "accomplishment", `finished a ${kind}: ${work.title}`, 0.5 * pm);
     addInfluence(c, "joy", `made a ${kind}`, 0.2 * pm);
+    if (m.paint && kind === "drawing" && c.inventory.includes("paint")) {
+      addInfluence(c, "accomplishment", "a drawing in real colours", 0.2 * pm); // the paint set's small bonus
+      wearOne(w, c, "paint");
+    }
     logFeed(w, c.id, "move", `${name} finishes a ${kind}: “${work.title}”.`);
     remember(w, c, `I made a ${kind} called “${work.title}” and put it on my shelf.`, 0.35 + 0.4 * nov);
   } else if (m.do === "launch_site") {
@@ -520,7 +534,7 @@ export function ruleLibraryOptions(w: World, c: Creature): LibOption[] {
   const price = slotPrice(c.shelfSlots);
   const reserve = 8; // coins always kept for bread
   if (room && makesToday(w, c) < MAKES_PER_DAY && c.energy > 0.35 && c.coins >= MAKE_COST + reserve) {
-    const kind = chooseKind(w, c);
+    const kind = c.inventory.includes("paint") ? "drawing" : chooseKind(w, c);
     const spot: PlaceId = MAKE_PLACES.includes(c.place) ? c.place : "workshop";
     out.push({ want: 0.46, key: `make:${kind}`, moves: [...walk(spot, "I want to make something of my own."), { do: "make", kind, why: `I feel like writing or drawing: a ${kind}.` }] });
   }

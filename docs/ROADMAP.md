@@ -8,3 +8,5 @@
 Cross-cutting: safety (filter lists, veto queue, cost caps), qa (tests, review), deploy.
 
 Engine tweaks 1 (branch engine/tweaks-1): stall habit rule (max 2 sells of one kind in a row, price floor 0.55, faster recovery), tea at the bakery (1 coin, comfort, habituation), server-side auto-walk for sell/buy_food/craft, one bounded model decision per creature per catch-up, varied rules wording, prompt says only listed items exist. New field `sellRun` (default in migrate.ts).
+
+Items batch 1 (branch items/batch-1, see docs/ITEMS.md): fixed catalogue of town objects: berries (gather), fishing rod and fish, paper kite, paint set (cheaper drawings), seed packet (becomes a garden through the builder lane), umbrella (softens rain). Caps, wear, habituation, weather interactions, rules-mind use, prompt listing. New fields `berries`, `plantings`, `gathers` (defaults in migrate.ts). Not yet: more objects, trading gear between creatures on purpose, seasonal berries.

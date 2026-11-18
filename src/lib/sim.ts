@@ -11,7 +11,8 @@ import {
   SPECIES,
   travelMinutes,
 } from "./content";
-import { checkBuildMove, noticeBuilds, startBuildMove, sweepBuilds, buildsToday, isBuildKind } from "./builder";
+import { checkBuildMove, noticeBuilds, startBuildMove, sweepBuilds, sweepPlantings, plantError, plantSeed, buildsToday, isBuildKind } from "./builder";
+import { BERRY_MAX, BERRY_REGROW_MIN, FISH_CHANCE, FISH_MINUTES, GATHERS_PER_DAY, GATHER_MINUTES, GATHER_PLACES, GOODS, KITE_HABIT, KITE_MINUTES, KITE_WIND, PLANT_MINUTES, SEED_PRICE, capReached, gathersToday, hasUmbrella, isGear, isGood, isRaining, isUsableGood, rainShield, weatherNow } from "./goods";
 import { applyOutside } from "./outside";
 import { checkReadMove, checkRequestMove, finishReadMove, matchBook, startReadMove, startRequestMove, sweepRequests } from "./books";
 import { checkPostcardMove, startPostcardMove } from "./postcards";
@@ -24,7 +25,7 @@ export const MIN_DECISION_GAP = 10; // world minutes between mind calls per crea
 export const POST_COOLDOWN = 180; // world minutes between notices from one creature
 export const MAX_CARRY = 6; // items a creature can carry before it must sell or give something away
 const FEED_CAP = 250;
-const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "read_book", "request_book", "send_postcard", "wait"];
+const MOVE_KINDS: MoveKind[] = ["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "read_book", "request_book", "send_postcard", "wait"];
 
 // ---------- small helpers ----------
 
@@ -120,7 +121,9 @@ export function describeActivity(w: World, c: Creature): string {
     case "gift":
       return "handing over a gift";
     case "use":
-      return "using something they carry";
+      return m.item === "rod" ? "fishing" : m.item === "kite" ? "flying a kite" : m.item === "seeds" ? "planting seeds" : "using something they carry";
+    case "gather":
+      return "picking berries";
     case "post":
       return "pinning a notice";
     case "buy_food":
@@ -193,6 +196,8 @@ interface Projection {
   makes: number;
   site: boolean;
   builds: number;
+  gathers: number;
+  berries: number;
 }
 
 function takeItem(inv: ItemId[], want: ItemId | undefined, ok: (i: ItemId) => boolean): ItemId | undefined {
@@ -211,6 +216,7 @@ export const usable = (w: World, id: ItemId): boolean => {
 /** Stops gifts bouncing back and forth, and one-sided streams of gifts. Returns a reason or null. */
 export function giftBlocked(w: World, c: Creature, o: Creature, item: ItemId): string | null {
   if (o.inventory.length >= MAX_CARRY) return `${o.sheet.name}'s hands are full`;
+  if (isGear(item) && o.inventory.includes(item)) return `${o.sheet.name} already has one`;
   if (c.received.some((r) => r.from === o.id && r.item === item && w.t - r.t < 480)) return `${o.sheet.name} gave me that a moment ago`;
   if (familiarity(c, `gift:${o.id}`, w.t) >= 1.5) return `already gave ${o.sheet.name} something lately`;
   return null;
@@ -245,6 +251,23 @@ function practise(w: World, c: Creature, key: string): number {
   return nov;
 }
 
+/** Can this town object be used here and now? Rod at the pond, kite at the park (not in rain), seeds at the park. Returns a reason or null. */
+export function goodUseError(w: World, c: Creature, item: ItemId, place: PlaceId): string | null {
+  const name = itemDef(w, item).name;
+  if (!isUsableGood(item)) {
+    if (item === "paint") return "the paint set is used when you make a drawing";
+    if (item === "umbrella") return "the umbrella works by itself when it rains";
+    return `${name} is not something to use`;
+  }
+  const at = GOODS[item].usePlace!;
+  if (place !== at) return `the ${name} is used at ${PLACES[at].name}`;
+  if (c.energy <= 0.1) return "too tired";
+  if (item === "rod" && c.inventory.length >= MAX_CARRY) return "no room in my hands to land a fish; sell or give something first";
+  if (item === "kite" && isRaining(w)) return "a kite will not fly in the rain";
+  if (item === "seeds") return plantError(w, place);
+  return null;
+}
+
 /** Checks a move against a *projected* state so chains like walk -> craft are allowed. Mutates proj. */
 function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null {
   switch (m.do) {
@@ -269,6 +292,15 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
     }
     case "buy_food":
       if (p.place !== "bakery") return "not at the bakery";
+      if (m.item === "seeds") {
+        if (p.coins < SEED_PRICE) return "not enough coins";
+        if (p.inv.length >= MAX_CARRY) return "carrying too much";
+        if (p.inv.includes("seeds")) return "already has a seed packet";
+        if (capReached(w, "seeds")) return "the bakery has no seed packets to spare";
+        p.coins -= SEED_PRICE;
+        p.inv.push("seeds");
+        return null;
+      }
       if (m.item === "tea") {
         if (p.coins < TEA_PRICE) return "not enough coins";
         if (p.inv.length >= MAX_CARRY) return "carrying too much";
@@ -290,8 +322,29 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
       if (p.place !== "workshop") return "not at the workshop";
       if (c.energy <= 0.12) return "too tired to craft";
       if (p.inv.length >= MAX_CARRY) return "carrying too much to craft more; sell or give something first";
+      if (isGear(m.item)) {
+        const cost = GOODS[m.item].craftCost ?? 0;
+        if (p.coins < cost) return `a ${itemDef(w, m.item).name} costs ${cost} coins to make`;
+        if (p.inv.includes(m.item)) return `already has a ${itemDef(w, m.item).name}`;
+        if (capReached(w, m.item)) return `the town already has enough ${itemDef(w, m.item).name}s`;
+        p.coins -= cost;
+        p.inv.push(m.item);
+        return null;
+      }
+      m.item = undefined; // anything else asked for is the usual craft
       p.inv.push(SPECIES[c.species].craft);
       return null;
+    case "gather": {
+      if (!GATHER_PLACES.includes(p.place)) return "berries grow at the park and the pond";
+      if (c.energy <= 0.1) return "too tired to gather";
+      if (p.inv.length >= MAX_CARRY) return "carrying too much";
+      if (p.gathers >= GATHERS_PER_DAY) return "already gathered plenty today";
+      if (p.berries <= 0) return "the bushes are bare for now";
+      p.gathers += 1;
+      p.berries -= 1;
+      p.inv.push("berries");
+      return null;
+    }
     case "sell": {
       if (p.place !== "fountain") return "not at the market stall";
       const item = takeItem(p.inv, m.item, (i) => itemDef(w, i).sell > 0);
@@ -314,6 +367,10 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
     case "use": {
       const item = m.item;
       if (!item || !p.inv.includes(item)) return "nothing like that to use";
+      if (isGood(item)) {
+        m.target = undefined;
+        return goodUseError(w, c, item, p.place);
+      }
       if (!usable(w, item)) return `${itemDef(w, item).name} is not something to use`;
       m.item = item;
       if (m.target) {
@@ -349,10 +406,17 @@ function checkMove(w: World, c: Creature, m: Move, p: Projection): string | null
 /** Where a move has to happen. A move proposed elsewhere is turned into a walk there. */
 const AUTO_WALK: Partial<Record<MoveKind, PlaceId>> = { sell: "fountain", buy_food: "bakery", craft: "workshop" };
 
+/** Where a move has to happen, given the creature's current place: the fixed table above, plus goods that are used in one spot. */
+function destFor(m: Move, here: PlaceId): PlaceId | undefined {
+  if (m.do === "use" && isUsableGood(m.item)) return GOODS[m.item!].usePlace;
+  if (m.do === "gather") return GATHER_PLACES.includes(here) ? undefined : "park";
+  return AUTO_WALK[m.do];
+}
+
 export function validateMoves(w: World, c: Creature, raw: unknown[]): { moves: Move[]; rejected: string[] } {
   const moves: Move[] = [];
   const rejected: string[] = [];
-  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site, builds: buildsToday(w, c) };
+  const proj: Projection = { place: c.place, inv: [...c.inventory], coins: c.coins, stock: w.bakeryStock, shelf: c.shelf.length + (c.activity?.kind === "make" ? 1 : 0), slots: c.shelfSlots, makes: makesToday(w, c), site: !!c.site, builds: buildsToday(w, c), gathers: gathersToday(w, c), berries: w.berries ?? 0 };
   for (const r of raw.slice(0, 3)) {
     if (moves.length >= 3) break;
     const m = normalizeMove(w, r);
@@ -362,7 +426,7 @@ export function validateMoves(w: World, c: Creature, raw: unknown[]): { moves: M
     }
     // Wrong place for a sell, buy_food or craft: the server swaps in a walk to the right place (and keeps the move, if
     // the move would then be valid). No model call is involved; the move is still validated in full.
-    const dest = AUTO_WALK[m.do];
+    const dest = destFor(m, proj.place);
     if (dest && proj.place !== dest && moves.length < 3) {
       const trial: Projection = { ...proj, inv: [...proj.inv] };
       const walk: Move = { do: "walk", place: dest, why: `I need to be at ${PLACES[dest].name} first.` };
@@ -455,6 +519,17 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     }
     case "buy_food": {
       if (c.place !== "bakery") return "not at the bakery";
+      if (m.item === "seeds") {
+        if (c.coins < SEED_PRICE) return "not enough coins";
+        if (c.inventory.length >= MAX_CARRY) return "carrying too much";
+        if (c.inventory.includes("seeds")) return "already has a seed packet";
+        if (capReached(w, "seeds")) return "the bakery has no seed packets to spare";
+        c.coins -= SEED_PRICE;
+        c.inventory.push("seeds");
+        begin(5);
+        say(`${name} buys a seed packet (${SEED_PRICE} coins).`);
+        return null;
+      }
       if (m.item === "tea") {
         if (c.coins < TEA_PRICE) return "not enough coins";
         if (c.inventory.length >= MAX_CARRY) return "carrying too much";
@@ -479,8 +554,31 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     case "craft": {
       if (c.place !== "workshop") return "not at the workshop";
       if (c.energy <= 0.12) return "too tired to craft";
+      if (isGear(m.item)) {
+        const cost = GOODS[m.item].craftCost ?? 0;
+        if (c.coins < cost) return `a ${itemDef(w, m.item).name} costs ${cost} coins to make`;
+        if (c.inventory.includes(m.item)) return `already has a ${itemDef(w, m.item).name}`;
+        if (capReached(w, m.item)) return `the town already has enough ${itemDef(w, m.item).name}s`;
+        c.coins -= cost;
+        begin(45);
+        say(`${name} starts making a ${itemDef(w, m.item).name} (${cost} coins of materials).`);
+        return null;
+      }
+      m.item = undefined;
       begin(45);
       say(`${name} starts crafting.`);
+      return null;
+    }
+    case "gather": {
+      if (!GATHER_PLACES.includes(c.place)) return "berries grow at the park and the pond";
+      if (c.energy <= 0.1) return "too tired to gather";
+      if (c.inventory.length >= MAX_CARRY) return "carrying too much";
+      if (gathersToday(w, c) >= GATHERS_PER_DAY) return "already gathered plenty today";
+      if ((w.berries ?? 0) <= 0) return "the bushes are bare for now";
+      w.berries -= 1;
+      c.gathers = { day: clockOf(w.t).day, n: gathersToday(w, c) + 1 };
+      begin(GATHER_MINUTES);
+      say(`${name} picks berries at ${PLACES[c.place].name}.`);
       return null;
     }
     case "sell": {
@@ -524,6 +622,24 @@ export function startMove(w: World, c: Creature, m: Move): string | null {
     }
     case "use": {
       const item = m.item;
+      if (item && isGood(item) && c.inventory.includes(item)) {
+        const err = goodUseError(w, c, item, c.place);
+        if (err) return err;
+        m.target = undefined;
+        if (item === "seeds") {
+          const e = plantSeed(w, c);
+          if (e) return e;
+          removeOne(c.inventory, "seeds");
+          begin(PLANT_MINUTES);
+          say(`${name} plants a seed packet at ${PLACES[c.place].name}.`);
+          addInfluence(c, "accomplishment", "planted something that will grow", 0.15);
+          remember(w, c, "I planted seeds at the park; they should be a garden in a day.", 0.4);
+          return null;
+        }
+        begin(item === "rod" ? FISH_MINUTES : KITE_MINUTES);
+        say(item === "rod" ? `${name} casts a line at the pond.` : `${name} lets a kite up at the park${weatherNow(w) === "wind" ? ", and the wind takes it high" : ""}.`);
+        return null;
+      }
       if (!item || !c.inventory.includes(item) || !usable(w, item)) return "nothing to use";
       const o = m.target ? w.creatures[m.target] : undefined;
       if (o && (o.place !== c.place || o.activity?.kind === "sleep")) m.target = undefined;
@@ -637,6 +753,52 @@ function applyUse(c: Creature, d: ReturnType<typeof itemDef>, source: string, pm
   impulse(c, 0, e.energy);
 }
 
+/** One use of a worn-out-able item is spent; at its durability it is gone. */
+export function wearOne(w: World, c: Creature, item: ItemId) {
+  const d = itemDef(w, item);
+  c.uses[item] = (c.uses[item] ?? 0) + 1;
+  if (c.uses[item] >= d.durability) {
+    removeOne(c.inventory, item);
+    delete c.uses[item];
+    logFeed(w, c.id, "move", `${c.sheet.name}'s ${d.name} is worn out.`);
+    remember(w, c, `My ${d.name} wore out.`, 0.4);
+  }
+}
+
+/** Rod and kite outcomes. Seeds were spent when planting began. Bounded: small influences, one seeded roll for a fish. */
+function finishGoodUse(w: World, c: Creature, item: ItemId) {
+  const name = c.sheet.name;
+  const d = itemDef(w, item);
+  if (item === "rod") {
+    const pm = payoffScale(practise(w, c, "use:rod"));
+    applyUse(c, d, "a quiet hour by the water", pm);
+    relieve(c, "comfort", 0.04 * pm);
+    const bite = c.inventory.length < MAX_CARRY && !capReached(w, "fish") && rand(w) < FISH_CHANCE;
+    if (bite) {
+      c.inventory.push("fish");
+      logFeed(w, c.id, "move", `${name} catches a fish.`);
+      remember(w, c, "I caught a fish at the pond.", 0.4);
+    } else {
+      logFeed(w, c.id, "move", `${name} fishes for a while; nothing bites.`);
+      remember(w, c, "I fished a while at the pond; the water was still.", 0.2);
+    }
+    touchItem(w, item);
+    wearOne(w, c, item);
+  } else if (item === "kite") {
+    if (isRaining(w)) {
+      logFeed(w, c.id, "move", `${name} brings the kite down; the rain has started.`);
+      return;
+    }
+    const pm = payoffScale(practise(w, c, "use:kite"));
+    for (let i = 1; i < KITE_HABIT; i++) noteExposure(c, "use:kite", w.t); // a kite palls fast
+    const windy = weatherNow(w) === "wind";
+    applyUse(c, { ...d, mood: d.mood * (windy ? KITE_WIND : 1) }, windy ? "a kite riding the wind" : "a kite in the sky", pm);
+    relieve(c, "boredom", 0.05 * pm);
+    remember(w, c, windy ? "The wind took my kite high." : "I flew my kite at the park.", 0.3);
+    wearOne(w, c, item);
+  }
+}
+
 function finishActivity(w: World, c: Creature) {
   const a = c.activity;
   if (!a) return;
@@ -675,6 +837,10 @@ function finishActivity(w: World, c: Creature) {
     case "use": {
       const item = m.item!;
       if (!c.inventory.includes(item)) break;
+      if (isGood(item)) {
+        finishGoodUse(w, c, item);
+        break;
+      }
       const d = itemDef(w, item);
       const pm = payoffScale(practise(w, c, `use:${item}`));
       applyUse(c, d, `the ${d.name}`, pm);
@@ -686,17 +852,39 @@ function finishActivity(w: World, c: Creature) {
         touchBond(c, o.id, { familiarity: 0.02, fondness: 0.02 });
         remember(w, o, `${name} let me try ${d.name}.`, 0.35);
       }
-      c.uses[item] = (c.uses[item] ?? 0) + 1;
       remember(w, c, `I spent a while with ${d.name}.`, 0.25);
-      if (c.uses[item] >= d.durability) {
-        removeOne(c.inventory, item);
-        delete c.uses[item];
-        logFeed(w, c.id, "move", `${name}'s ${d.name} is worn out.`);
-        remember(w, c, `My ${d.name} wore out.`, 0.4);
-      }
+      wearOne(w, c, item);
+      break;
+    }
+    case "gather": {
+      const nov = practise(w, c, "gather:berries");
+      const pm = payoffScale(nov);
+      if (c.inventory.length < MAX_CARRY) c.inventory.push("berries");
+      else w.berries = Math.min(BERRY_MAX, (w.berries ?? 0) + 1); // hands filled meanwhile: the handful goes back to the bush
+      c.energy = clamp(c.energy - 0.02, ENERGY_FLOOR, 1);
+      relieve(c, "comfort", 0.02);
+      impulse(c, 0.02 * pm);
+      remember(w, c, `I picked berries at ${PLACES[c.place].name}.`, 0.15 + 0.15 * nov);
       break;
     }
     case "craft": {
+      if (isGear(m.item)) {
+        const g = m.item;
+        const gd = itemDef(w, g);
+        if (c.inventory.length >= MAX_CARRY || c.inventory.includes(g)) {
+          c.coins += GOODS[g].craftCost ?? 0; // no room to carry it: the materials are returned
+          remember(w, c, `I could not carry the ${gd.name} I made, so I got my coins back.`, 0.2);
+          break;
+        }
+        const nov = practise(w, c, `craft:${g}`);
+        c.inventory.push(g);
+        c.energy = clamp(c.energy - 0.08, ENERGY_FLOOR, 1);
+        relieve(c, "comfort", 0.03);
+        addInfluence(c, "accomplishment", `made a ${gd.name}`, 0.35 * payoffScale(nov));
+        logFeed(w, c.id, "move", `${name} finishes a ${gd.name}.`);
+        remember(w, c, `I made a ${gd.name}.`, 0.3 + 0.3 * nov);
+        break;
+      }
       const item = SPECIES[c.species].craft;
       const stock = c.inventory.filter((i) => i === item).length;
       const nov = practise(w, c, `craft:${item}`);
@@ -856,8 +1044,9 @@ function maybeEvent(w: World) {
   logFeed(w, "world", "system", ev.text);
   for (const c of Object.values(w.creatures)) {
     if (ev.name === "rain") {
-      if (c.place !== "nests" && c.place !== "workshop") bumpNeed(c, "comfort", 0.08);
-      impulse(c, appraise(c, ["rain"]) * 0.4);
+      if (c.place !== "nests" && c.place !== "workshop") bumpNeed(c, "comfort", rainShield(c, 0.08));
+      const felt = appraise(c, ["rain"]) * 0.4;
+      impulse(c, felt < 0 ? rainShield(c, felt) : felt);
     } else if (ev.name === "festival") {
       relieve(c, "loneliness", 0.1);
       if (c.place === "fountain") addInfluence(c, "joy", "the festival", 0.4);
@@ -865,6 +1054,10 @@ function maybeEvent(w: World) {
     remember(w, c, `Today: ${ev.text}`, 0.3);
   }
   applyOutside(w, clk.day);
+  if (ev.name === "rain" || w.outside?.weather === "rain") {
+    // a carried umbrella took the rain once today: it wears a little (outdoors only)
+    for (const c of Object.values(w.creatures)) if (hasUmbrella(c) && !["nests", "workshop", "bakery"].includes(c.place)) wearOne(w, c, "umbrella");
+  }
   if (ev.name === "delivery") w.bakeryStock = BAKERY_MAX_STOCK;
   if (ev.name === "festival") for (const k of Object.keys(w.market)) w.market[k] = 1;
 }
@@ -875,6 +1068,8 @@ export function stepWorld(w: World): string[] {
   maybeEvent(w);
   if (w.t % 60 < STEP) sweepBuilds(w, (x, who, kind, text) => logFeed(x, who, kind, text));
   if (w.t % 60 < STEP) sweepRequests(w);
+  if (w.t % 60 < STEP) sweepPlantings(w, (x, who, kind, text) => logFeed(x, who, kind, text));
+  if (w.t % BERRY_REGROW_MIN < STEP && (w.berries ?? 0) < BERRY_MAX) w.berries = (w.berries ?? 0) + 1;
   if (w.t % 60 < STEP && w.bakeryStock < BAKERY_MAX_STOCK) w.bakeryStock += 1;
   for (const k of Object.keys(w.market)) w.market[k] = Math.min(1, w.market[k] + MARKET_RECOVERY);
   const need: string[] = [];

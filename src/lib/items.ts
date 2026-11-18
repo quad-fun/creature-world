@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { checkText } from "./filter";
 import { ITEMS } from "./content";
+import { GOODS, isGood } from "./goods";
 import type { CustomItem, ItemId, ItemKind, World } from "./types";
 
 export const ITEM_KINDS = ["toy", "food", "tool", "art", "wearable", "curio"] as const;
@@ -70,7 +71,10 @@ const FOOD_VALUE = 0.3;
 
 export function itemDef(w: Pick<World, "items">, id: ItemId): ItemDef {
   const cat = (ITEMS as Record<string, (typeof ITEMS)["bread"]>)[id];
-  if (cat) return { id, ...cat, kind: CATALOG_KIND[id] ?? "curio", desc: "", mood: CATALOG_EFFECT[id]?.mood ?? 0, energy: CATALOG_EFFECT[id]?.energy ?? 0, durability: 1, custom: false };
+  if (cat) {
+    const g = isGood(id) ? GOODS[id] : undefined; // town objects (goods.ts)
+    return { id, ...cat, kind: g?.kind ?? CATALOG_KIND[id] ?? "curio", desc: "", mood: g?.mood ?? CATALOG_EFFECT[id]?.mood ?? 0, energy: g?.energy ?? CATALOG_EFFECT[id]?.energy ?? 0, durability: g?.durability ?? 1, custom: false };
+  }
   const c = w.items?.[id];
   if (!c) return { ...FALLBACK, id };
   return {
@@ -90,12 +94,14 @@ export function itemDef(w: Pick<World, "items">, id: ItemId): ItemDef {
 export const itemName = (w: Pick<World, "items">, id: ItemId) => itemDef(w, id).name;
 
 /** Resolve a loose name (from a model or visitor) to a known item id, or undefined. */
-export function matchItemId(w: Pick<World, "items">, s: string): ItemId | undefined {
+export function matchItemId(w: Pick<World, "items">, s: string, opts: { goods?: boolean } = {}): ItemId | undefined {
   const x = s.toLowerCase().trim();
   const n = normName(s);
-  for (const [id, d] of Object.entries(ITEMS)) if (id === x || d.name.toLowerCase() === x) return id;
+  const goods = opts.goods ?? true; // visitor gifts pass false: a gifted "kite" is an appraised toy, never a town object (so caps cannot be bypassed)
+  const ids = Object.keys(ITEMS).filter((id) => goods || !isGood(id));
+  for (const id of ids) if (id === x || ITEMS[id as keyof typeof ITEMS].name.toLowerCase() === x) return id;
   for (const id of Object.keys(w.items ?? {})) if (id === x || normName(w.items[id].name) === n) return id;
-  for (const id of Object.keys(ITEMS)) if (new RegExp(`(^|[^a-z])${id}([^a-z]|$)`).test(x)) return id; // whole words only ("instead" is not tea)
+  for (const id of ids) if (new RegExp(`(^|[^a-z])${id}([^a-z]|$)`).test(x)) return id; // whole words only ("instead" is not tea)
   return undefined;
 }
 

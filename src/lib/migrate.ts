@@ -1,7 +1,8 @@
 // Older saved worlds lack newer fields. Fill them in when a world is loaded. Idempotent.
 import { clamp, ensureNeeds } from "./affect";
 import { seedInterests } from "./novelty";
-import { MAX_ACTIVE_BUILDS, MAX_PENDING_BUILDS, cleanBuildText, isBuildKind } from "./builder";
+import { MAX_ACTIVE_BUILDS, MAX_PENDING_BUILDS, MAX_PLANTINGS, cleanBuildText, isBuildKind } from "./builder";
+import { BERRY_MAX } from "./goods";
 import { PLACE_IDS } from "./content";
 import { checkText } from "./filter";
 import { validOutside } from "./outside";
@@ -38,6 +39,10 @@ export function migrate(w: World): World {
   w.items ??= {};
   w.builds = Array.isArray(w.builds) ? w.builds.filter(validBuild).slice(0, MAX_ACTIVE_BUILDS + MAX_PENDING_BUILDS) : [];
   w.buildSeq = Math.max(typeof w.buildSeq === "number" && Number.isFinite(w.buildSeq) ? w.buildSeq : 0, ...w.builds.map((b) => b.id));
+  w.berries = typeof w.berries === "number" && Number.isFinite(w.berries) ? Math.min(BERRY_MAX, Math.max(0, Math.floor(w.berries))) : BERRY_MAX;
+  w.plantings = Array.isArray(w.plantings)
+    ? w.plantings.filter((p) => !!p && typeof p === "object" && typeof p.by === "string" && p.place === "park" && Number.isFinite(p.t) && Number.isFinite(p.readyT) && p.readyT - p.t <= 2 * 1440).slice(0, MAX_PLANTINGS)
+    : [];
   if (!validOutside(w.outside)) delete w.outside; // the engine or stepWorld rebuilds it
   w.postcards = Array.isArray(w.postcards) ? w.postcards.filter(validCard).slice(-40) : [];
   w.postcardSeq = Math.max(typeof w.postcardSeq === "number" && Number.isFinite(w.postcardSeq) ? w.postcardSeq : 0, ...w.postcards.map((p) => p.id));
@@ -51,6 +56,7 @@ export function migrate(w: World): World {
     c.shelfSlots ??= 4;
     c.workSeq ??= c.shelf.reduce((m, x) => Math.max(m, x.n), 0);
     c.makes ??= { day: 0, n: 0 };
+    c.gathers = c.gathers && Number.isFinite(c.gathers.day) && Number.isFinite(c.gathers.n) ? c.gathers : { day: 0, n: 0 };
     c.site ??= null;
     c.buildsMade ??= { day: 0, n: 0 };
     c.reads ??= { day: 0, n: 0 };

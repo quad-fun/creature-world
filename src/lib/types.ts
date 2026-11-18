@@ -2,7 +2,7 @@
 // All state is plain JSON so it can live in a single Redis key.
 
 export type PlaceId = "fountain" | "workshop" | "bakery" | "pond" | "park" | "nests";
-export type CatalogItemId = "bread" | "tea" | "mended-thing" | "trinket" | "potion";
+export type CatalogItemId = "bread" | "tea" | "mended-thing" | "trinket" | "potion" | "berries" | "fish" | "rod" | "kite" | "paint" | "seeds" | "umbrella";
 /** A catalog id, or "x-<slug>" for an appraised visitor gift (resolved through items.ts itemDef). */
 export type ItemId = string;
 export type ItemKind = "toy" | "food" | "tool" | "art" | "wearable" | "curio";
@@ -33,6 +33,7 @@ export type MoveKind =
   | "sleep"
   | "play"
   | "use"
+  | "gather"
   | "post"
   | "make"
   | "discard"
@@ -138,6 +139,7 @@ export interface Move {
   title?: string; // make / launch_site
   topic?: string; // make: optional subject
   n?: number; // discard / give_work: work number
+  paint?: boolean; // set only by the engine when a drawing is made with a paint set; never from model output
   piece?: { title: string; body: string; shapes?: Shape[] }; // set only by the engine after writing; never from model output
   text?: string; // speak
   why: string;
@@ -213,6 +215,7 @@ export interface Creature {
   workSeq: number;
   makes: { day: number; n: number }; // works started on this world day
   buildsMade: { day: number; n: number }; // build proposals on this world day
+  gathers: { day: number; n: number }; // berry gatherings on this world day
   site: Site | null;
   reads: { day: number; n: number }; // books read on this world day
   booksRead: string[]; // recent book ids, newest last (max 12)
@@ -303,6 +306,14 @@ export interface BookRequest {
   status: "pending" | "approved";
 }
 
+/** A seed packet planted at the park. After one world day it becomes a garden build (builder.ts). Pure data. */
+export interface Planting {
+  by: string; // creature id
+  place: PlaceId;
+  t: number; // planted
+  readyT: number;
+}
+
 export interface World {
   version: 1;
   t: number; // world minutes since start
@@ -318,6 +329,8 @@ export interface World {
   stats: Stats;
   board: BoardEntry[];
   boardSeq: number;
+  berries: number; // town-wide berry supply, regrows (goods.ts)
+  plantings: Planting[]; // seeds in the ground, bounded (builder.ts)
   builds: Build[]; // pending and active, bounded by builder.ts caps
   buildSeq: number;
   outside?: Outside;

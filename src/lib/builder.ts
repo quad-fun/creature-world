@@ -39,6 +39,11 @@ export const BUILD_LIFETIME = 7 * 1440; // an approved build fades after a world
 export const PENDING_LIFETIME = 3 * 1440; // an unanswered proposal lapses (and is refunded) after three world days
 export const MAX_NOTICED_PER_VISIT = 2;
 
+/** Seeds in the ground reserve a place for their garden, so a sprouting packet always has room. */
+export const plantingsAt = (w: World, place?: PlaceId): number => (w.plantings ?? []).filter((p) => !place || p.place === place).length;
+export const PLANT_GROW = 1440; // one world day from planting to garden
+export const MAX_PLANTINGS = 4;
+
 export const buildsToday = (w: World, c: Creature): number => (c.buildsMade.day === Math.floor(w.t / 1440) + 1 ? c.buildsMade.n : 0);
 export const activeBuilds = (w: World, place?: PlaceId): Build[] => w.builds.filter((b) => b.status === "active" && (!place || b.place === place));
 export const pendingBuilds = (w: World): Build[] => w.builds.filter((b) => b.status === "pending");
@@ -71,9 +76,9 @@ function capsError(w: World, c: Creature, kind: BuildKind, place: PlaceId, text:
   if (c.energy <= 0.3) return "too tired to build anything";
   if (buildsToday_ >= BUILDS_PER_DAY) return "already proposed something today";
   if (coins < def.cost) return "not enough coins for materials";
-  if (activeBuilds(w, place).length + pendingBuilds(w).filter((b) => b.place === place).length >= MAX_BUILDS_PER_PLACE) return "that place has enough already";
+  if (activeBuilds(w, place).length + pendingBuilds(w).filter((b) => b.place === place).length + plantingsAt(w, place) >= MAX_BUILDS_PER_PLACE) return "that place has enough already";
   if (autoApprovable(kind, text)) {
-    if (activeBuilds(w).length >= MAX_ACTIVE_BUILDS) return "the town has all the additions it can hold";
+    if (activeBuilds(w).length + plantingsAt(w) >= MAX_ACTIVE_BUILDS) return "the town has all the additions it can hold";
   } else if (pendingBuilds(w).length >= MAX_PENDING_BUILDS) return "too many proposals are waiting for an answer";
   return null;
 }
@@ -145,6 +150,36 @@ export function noticeBuilds(w: World, c: Creature): void {
     if (def.joy) addInfluence(c, "joy", `the ${def.label} here`, def.joy * pm);
     if (nov >= 0.6) relieve(c, "boredom", 0.04 * nov);
     noteExposure(c, key, w.t);
+  }
+}
+
+// ---------- seed packets: a planting becomes a garden after one world day ----------
+
+/** Can a seed be planted at this place right now? Counts toward the same caps as any build. Returns a reason or null. */
+export function plantError(w: World, place: PlaceId): string | null {
+  if (place !== "park") return "seeds are planted at the park";
+  if (plantingsAt(w) >= MAX_PLANTINGS) return "enough seeds are already growing";
+  if (activeBuilds(w, place).length + pendingBuilds(w).filter((b) => b.place === place).length + plantingsAt(w, place) >= MAX_BUILDS_PER_PLACE) return "the park has enough already";
+  if (activeBuilds(w).length + plantingsAt(w) >= MAX_ACTIVE_BUILDS) return "the town has all the additions it can hold";
+  return null;
+}
+export function plantSeed(w: World, c: Creature): string | null {
+  const err = plantError(w, c.place);
+  if (err) return err;
+  w.plantings.push({ by: c.id, place: c.place, t: w.t, readyT: w.t + PLANT_GROW });
+  return null;
+}
+/** Hourly: a ripe planting becomes an auto-approved, unlabelled garden (cost 0: the seeds were the price). Bounded by the same caps. */
+export function sweepPlantings(w: World, logFeed: (w: World, who: string, kind: "system", text: string) => void): void {
+  for (const p of [...(w.plantings ?? [])]) {
+    if (w.t < p.readyT) continue;
+    w.plantings.splice(w.plantings.indexOf(p), 1);
+    if (activeBuilds(w).length >= MAX_ACTIVE_BUILDS) {
+      logFeed(w, "world", "system", "Some seeds at the park did not take; the town has no room left.");
+      continue;
+    }
+    w.builds.push({ id: ++w.buildSeq, kind: "garden", place: p.place, by: p.by, cost: 0, status: "active", createdT: w.t, expiresT: w.t + BUILD_LIFETIME });
+    logFeed(w, "world", "system", `Seeds planted at ${PLACES[p.place].name} have grown into a garden plot.`);
   }
 }
 

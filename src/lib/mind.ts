@@ -10,6 +10,7 @@ import { BUILDS_PER_DAY, BUILD_CATALOG, buildsToday, activeBuilds } from "./buil
 import { MAKES_PER_DAY, MAKE_COST, MAX_SLOTS, SITE_COST, SITE_MIN_WORKS, makesToday, slotPrice } from "./library";
 import { BOOKS, BOOKS_PER_DAY, MAX_PENDING_REQUESTS, bookTags, pendingRequests, readsToday } from "./books";
 import { outsideLine } from "./outside";
+import { GATHERS_PER_DAY, GATHER_MINUTES, GOODS, SEED_PRICE, gathersToday, isRaining, weatherNow } from "./goods";
 import { POSTCARDS_PER_DAY, POSTCARD_MAX, cardsToday } from "./postcards";
 import { clockOf, creaturesAt, describeActivity, MAX_CARRY, MAX_SELL_RUN, POST_COOLDOWN, SELL_RUN_RESET } from "./sim";
 import { interestWord, pursuitWord, staleKeys, stepKindFor } from "./novelty";
@@ -29,10 +30,10 @@ export function modelAvailable(): boolean {
 // Nullable (not optional) fields keep the schema valid for every provider behind the Gateway.
 // Counts (1 to 3 moves) are enforced in code because not all providers support array bounds.
 const MoveSchema = z.object({
-  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "read_book", "request_book", "send_postcard", "wait"]),
+  do: z.enum(["walk", "speak", "eat", "buy_food", "craft", "sell", "gift", "rest", "sleep", "play", "use", "gather", "post", "make", "discard", "give_work", "buy_slot", "launch_site", "propose_build", "read_book", "request_book", "send_postcard", "wait"]),
   place: z.string().nullable().describe("walk only: a place id"),
   target: z.string().nullable().describe("speak or gift (or optionally use, to share it): a creature id"),
-  item: z.string().nullable().describe("eat, sell, gift or use: an item name or id; read_book: a book id from the town shelf"),
+  item: z.string().nullable().describe("eat, sell, gift, use or craft (gear): an item name or id; buy_food: bread, tea or seeds; read_book: a book id from the town shelf"),
   kind: z.enum(["note", "plan", "journal", "drawing"]).nullable().describe("make only: what to make"),
   title: z.string().nullable().describe("make: a working title; launch_site: the website title (max 60 characters); request_book: the title you wish the town had (max 60 plain characters)"),
   topic: z.string().nullable().describe("make only: an optional subject, a few words"),
@@ -131,6 +132,12 @@ function carryNote(w: World, c: Creature): string {
   return pile.length ? ` You are piling up ${pile.map(([i, n]) => `${n} ${itemDef(w, i).name}s`).join(", ")}; they only help once sold at the fountain.${full}` : full;
 }
 
+/** The fixed list of town objects, with where each is usable. Labelled facts for the prompt; the server is what makes them real. */
+function goodsNote(w: World, c: Creature): string {
+  const rain = isRaining(w) ? " It is raining now: no kites." : weatherNow(w) === "wind" ? " It is windy: good for kites." : "";
+  return `berries (gather at park or pond; free; a little food), fish (caught with a rod at the pond; food better than bread; sells for ${itemDef(w, "fish").sell}), fishing rod (craft ${GOODS.rod.craftCost} coins; use at the pond), paper kite (craft ${GOODS.kite.craftCost} coins; use at the park), paint set (craft ${GOODS.paint.craftCost} coins; makes drawings cheaper), seed packet (bakery ${SEED_PRICE} coins; use at the park), umbrella (craft ${GOODS.umbrella.craftCost} coins; softens rain by itself while carried). Gear wears out, cannot be sold, and any one thing pays less each time you repeat it.${rain}`;
+}
+
 function stallNote(w: World, c: Creature): string {
   const r = c.sellRun;
   if (!r || r.n < MAX_SELL_RUN || w.t - r.t > SELL_RUN_RESET) return "";
@@ -190,7 +197,7 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
   const walkTimes = PLACE_IDS.filter((p) => p !== c.place)
     .map((p) => `${p} ${travelMinutes(c.place, p)} min`)
     .join(", ");
-  const prices = (["mended-thing", "trinket", "potion"] as const)
+  const prices = (["mended-thing", "trinket", "potion", "fish"] as const)
     .map((i) => `${itemDef(w, i).name} ${Math.max(1, Math.round(itemDef(w, i).sell * (w.market[i] ?? 1)))}`)
     .join(", ");
   const rel = ids.map((id) => `${w.creatures[id].sheet.name}: ${bondWord(c.bonds[id])}`).join("; ");
@@ -222,7 +229,7 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     recentGifts(w, c),
     `Walking time from here: ${walkTimes}.`,
     `Bread costs ${BREAD_PRICE} coins at the bakery, and a cup of tea ${TEA_PRICE} coin (buy_food with item "tea"; it comforts a little, and a third cup in a day does little). Stall prices now: ${prices}.${stallNote(w, c)}`,
-    `Only the things listed in what you carry, in the stall prices above, and bread and tea at the bakery exist. Do not invent or ask for other objects (no teacups, kettles or other goods); to get something new, craft ${itemDef(w, SPECIES[c.species].craft).name} or wait for a visitor's gift.`,
+    `Only the things listed in what you carry, in the stall prices above, and bread and tea at the bakery exist, plus this fixed list of town objects: ${goodsNote(w, c)}. Do not invent or ask for any other objects (no teacups, kettles, boats or other goods); to get something new, craft ${itemDef(w, SPECIES[c.species].craft).name} or one of the gear above, or wait for a visitor's gift.`,
     `Relationships: ${rel}`,
     mem.length ? `Things you remember:\n${mem.map((m) => `- ${m.text}`).join("\n")}` : "You have no strong memories yet.",
     heard ? `Spoken to you since you last decided:\n${heard}` : "",
@@ -233,13 +240,14 @@ export function buildDecisionPrompt(w: World, c: Creature): { system: string; pr
     `- walk: place is one of ${PLACE_IDS.join(", ")}`,
     `- speak: target is a creature id (${ids.join(", ")}) who is with you and awake; text is what you say`,
     `- eat: item is food you carry`,
-    `- buy_food: only at the bakery; item is "bread" (the default) or "tea"`,
-    `- craft: only at the workshop (you make ${itemDef(w, SPECIES[c.species].craft).name})`,
+    `- buy_food: only at the bakery; item is "bread" (the default), "tea" or "seeds" (a seed packet, ${SEED_PRICE} coins)`,
+    `- craft: only at the workshop (you make ${itemDef(w, SPECIES[c.species].craft).name}); or set item to "rod", "kite", "paint" or "umbrella" to make that gear for a few coins (one of each per creature, and the town has only a few)`,
+    `- gather: only at the park or pond; free berries (item is not needed), about ${GATHER_MINUTES} minutes, at most ${GATHERS_PER_DAY} a day (you did ${gathersToday(w, c)}); the bushes hold ${w.berries ?? 0} portions for the whole town and regrow slowly`,
     `- sell: only at the fountain; item is something you carry that can be sold`,
     `- gift: target is someone here; item is something you carry`,
-    `- use: item is a non-food thing you carry that is not plain bread or a stall good (a toy, tool, art, wearable or curio); target is optional, someone here to share it with. It lifts mood a little, wears out after a number of uses, and pays less when repeated.`,
+    `- use: item "rod" at the pond (calm, may catch a fish), "kite" at the park (big joy, tires fast, better in wind, not in rain), "seeds" at the park (becomes a garden plot after a day); or an unusual non-food thing you carry that is not plain bread or a stall good (a toy, tool, art, wearable or curio); target is optional, someone here to share it with. It lifts mood a little, wears out after a number of uses, and pays less when repeated.`,
     `- post: text is a short public notice or postcard for the town board; visitors from outside read it too. Rare: only when you have something worth saying. ${postNote(w, c)}`,
-    `- make: only at the workshop or the park; kind is note, plan, journal or drawing; title and topic are optional. Costs ${MAKE_COST} coins and some energy, takes about 40 minutes, at most ${MAKES_PER_DAY} a day, and needs a free shelf slot. You will write it afterwards in your own voice. Making the same kind again and again pays less.`,
+    `- make: only at the workshop or the park; kind is note, plan, journal or drawing; title and topic are optional. Costs ${MAKE_COST} coins (a drawing made while you carry a paint set costs 1 and feels more accomplished) and some energy, takes about 40 minutes, at most ${MAKES_PER_DAY} a day, and needs a free shelf slot. You will write it afterwards in your own voice. Making the same kind again and again pays less.`,
     `- discard (n is a work number) or give_work (target is someone here, n is a work number): free a slot. buy_slot: only at the fountain, costs ${slotPrice(c.shelfSlots)} coins (up to ${MAX_SLOTS} slots).`,
     `- launch_site: only at the workshop, once; needs ${SITE_MIN_WORKS} works and ${SITE_COST} coins; set title and text (a tagline). It shows your works and diary on a public page.`,
     `- propose_build: build is one of ${Object.entries(BUILD_CATALOG).map(([k, d]) => `${k} (${d.cost} coins)`).join(", ")}; you build where you are (${PLACES[c.place].name}). A sign needs text. Costs coins and some energy, at most ${BUILDS_PER_DAY} a day (you have made ${buildsToday(w, c)} today). A plain bench, garden, flower box or lantern goes up at once; anything with words waits for the town's approval and may be turned down.`,

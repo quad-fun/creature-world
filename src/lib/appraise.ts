@@ -52,7 +52,7 @@ export async function appraiseGifts(w: World, inbox: InboxItem[], opts: { model?
     if (it.type !== "gift") continue;
     const t = giftText(it.name, it.description, sanitizeName, sanitizeText);
     if (!t || !w.creatures[it.to]) continue;
-    if (matchItemId(w, t.name)) continue; // catalog item or already appraised: never twice
+    if (matchItemId(w, t.name, { goods: false })) continue; // catalog item or already appraised: never twice
     const id = customId(normName(t.name));
     const day = utcDay();
     if (w.appraisals.day !== day) w.appraisals = { day, n: 0 };

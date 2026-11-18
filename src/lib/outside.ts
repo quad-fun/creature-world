@@ -3,6 +3,7 @@
 // reading is used only as three numbers (code, temperature, wind); no text from the network is ever kept,
 // stored or shown. Without WEATHER_URL the weather is a deterministic seeded fake, so tests and offline runs work.
 import { addInfluence, bumpNeed, appraise, impulse, relieve } from "./affect";
+import { rainShield } from "./goods";
 import { noteExposure, novelty, payoffScale } from "./novelty";
 import type { Kv } from "./store";
 import type { Outside, Season, Weather, World } from "./types";
@@ -216,8 +217,11 @@ export function applyOutside(w: World, day: number): void {
         if (out) addInfluence(c, "joy", "a clear day", 0.14 * pm);
         break;
       case "rain":
-        if (out) bumpNeed(c, "comfort", 0.05);
-        impulse(c, appraise(c, ["rain"]) * 0.15 * pm);
+        if (out) bumpNeed(c, "comfort", rainShield(c, 0.05));
+        {
+          const felt = appraise(c, ["rain"]) * 0.15 * pm;
+          impulse(c, felt < 0 ? rainShield(c, felt) : felt);
+        }
         break;
       case "snow":
         if (out) {

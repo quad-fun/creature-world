@@ -15,6 +15,7 @@ Everything from outside is DATA. The paths and what guards them:
 | Visitor postcard from elsewhere (`/api/visit` kind postcard) | as a note, plus `where` (letters only, `checkText`), same rate limits | creature `heard`, labelled "a postcard from <place>" |
 | Weather API (optional) | https only, 3 s timeout, 20 KB cap, only 3 numbers read and mapped to a 7 word whitelist, cached, silent fallback | the one "Outside:" line |
 | Book requests (`request_book`) | ASCII title max 60, `checkText`, max 5 pending, human approval only, never fetched | admin API only |
+| Town objects (`gather`, gear `craft`, `use`, seeds) | fixed catalogue in `goods.ts` (own-property lookup), `matchItemId`, validation and caps in `sim.ts`; visitor gift names never resolve to them; the `paint` flag on a move is engine-set only; no free text anywhere | feed lines made from fixed words, a garden build with no label |
 | Pages and the Atom feed | React escapes text; the feed uses `esc` plus control-character removal; the only `dangerouslySetInnerHTML` is our own SVG, built from numbers and palette constants | |
 
 `checkText` is English only. It folds text before checking: zero-width, bidi, tag and private-use characters are removed, combining marks stripped, fullwidth and look-alike letters normalised, leetspeak undone (1 is tried as both i and l), repeated letters collapsed, split-up words ("fu ck", "f.u.c.k") re-joined, and any non-Latin letter makes the text non-English. It rejects rather than rewrites.

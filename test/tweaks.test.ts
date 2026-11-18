@@ -170,11 +170,12 @@ test("tea: habituation stops a creature drinking cup after cup", () => {
 test("tea: a creature that likes it and has spare coins eventually drinks some in rules mode; bread buys still never overfill hands", () => {
   const w = fresh();
   let teas = 0;
+  let seen = 0;
   for (let i = 0; i < 288 * 5; i++) {
     for (const id of stepWorld(w)) applyRulesForTest(w, w.creatures[id]);
     for (const c of Object.values(w.creatures)) assert.ok(c.inventory.length <= 6);
+    for (const f of w.feed) if (f.id > seen) { seen = f.id; if (/cup of tea/.test(f.text)) teas++; } // counted as it happens: the feed keeps only 250 lines
   }
-  teas = w.feed.filter((f) => /cup of tea/.test(f.text)).length;
   assert.ok(teas > 0, "tea was drunk");
   assert.ok(teas < 60, `tea is not a loop (${teas})`);
 });

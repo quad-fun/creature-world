@@ -98,7 +98,7 @@ function applyOne(w: World, it: InboxItem) {
       const from = sanitizeName(it.from) || "a visitor";
       const t = giftText(it.name, it.description, sanitizeName, sanitizeText);
       if (!c || !t || !checkText(from, { allowEmpty: true }).ok) return;
-      const id = matchItemId(w, t.name) ?? (w.items[customId(normName(t.name))] ? customId(normName(t.name)) : undefined);
+      const id = matchItemId(w, t.name, { goods: false }) ?? (w.items[customId(normName(t.name))] ? customId(normName(t.name)) : undefined);
       if (!id) return;
       const d = itemDef(w, id);
       if (c.inventory.length >= MAX_CARRY) {
